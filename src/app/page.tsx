@@ -1,6 +1,6 @@
 import CatergoryList from "@/components/CatergoryList"
 import ProductList from "@/components/ProductList"
-import Slider from "@/components/Slider"
+import Slider from "@/components/Slides"
 
 const HomePage = () => {
   return (

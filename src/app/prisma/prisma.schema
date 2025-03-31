@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+}
+
+datasource db {
+  provider = "postgresql" // or mysql, sqlite
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLogin     DateTime?
+
+  // Example relation (for future use)
+  // posts      Post[]
+}
+
+// Example additional model
+// model Post {
+//   id        String   @id @default(uuid())
+//   title     String
+//   content   String?
+//   author    User     @relation(fields: [authorId], references: [id])
+//   authorId  String
+// }

@@ -8,3 +8,49 @@
 .scrollbar-hide{
     scrollbar-width: none;
 }
+/* Add this to your global CSS to debug */
+* {
+    backdrop-filter: none !important; /* Disable blur layers */
+    transform: none !important;      /* Disable GPU-heavy transforms */
+  }
+
+  /* Add to globals.css */
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 1000ms;
+  }  
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  .animate-fadeOut {
+    animation: fadeOut 0.5s ease-out 1.5s forwards;
+  }
+  :root {
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 214, 219, 220;
+    --background-end-rgb: 255, 255, 255;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --foreground-rgb: 255, 255, 255;
+      --background-start-rgb: 0, 0, 0;
+      --background-end-rgb: 0, 0, 0;
+    }
+  }
+  
+  body {
+    color: rgb(var(--foreground-rgb));
+    background: linear-gradient(
+        to bottom,
+        transparent,
+        rgb(var(--background-end-rgb))
+      )
+      rgb(var(--background-start-rgb));
+  }
+  
+  .dark {
+    color-scheme: dark;
+  }

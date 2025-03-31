@@ -1,60 +1,30 @@
-"use client";
-
-import { url } from "inspector";
+// src/components/ProductImages.tsx
 import Image from "next/image";
-import { useState } from "react";
 
-const images = [
-  {
-    id: 1,
-    url: "https://images.pexels.com/photos/21550488/pexels-photo-21550488/free-photo-of-blue-scooter-parked-by-a-wall.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
-  },
-  {
-    id: 2,
-    url: "https://images.pexels.com/photos/27777788/pexels-photo-27777788/free-photo-of-photo-of-a-ray-fish.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
-  },
-  {
-    id: 3,
-    url: "https://images.pexels.com/photos/27776677/pexels-photo-27776677/free-photo-of-uluyayla.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
-  },
-  {
-    id: 4,
-    url: "https://images.pexels.com/photos/20565236/pexels-photo-20565236/free-photo-of-two-people-standing-by-a-sea.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
-  },
-];
+interface Props {
+  images: string[];
+}
 
-const ProductImages = () => {
-  const [index, setIndex] = useState(0);
-
+const ProductImages = ({ images }: Props) => {
   return (
-    <div className="">
-      <div className="h-[500px] relative">
+    <>
+      <div className="relative w-full h-80">
+        <Image
+          src={images[0]}
+          alt="Main product image"
+          fill
+          className="object-cover rounded-md z-10 hover:opacity-0 transition-opacity ease duration-500"
+        />
+        {images[1] && (
           <Image
-            src={images[index].url}
-            alt=""
+            src={images[1]}
+            alt="Alternate product view"
             fill
-            sizes="50vw"
-            className="object-cover rounded-md"
+            className="absolute object-cover rounded-md"
           />
+        )}
       </div>
-
-      <div className="flex justify-between gap-4 mt-8">
-        {images.map((img, i) => (
-          <div
-            className="w-1/4 h-32 relative gap-4 mt-8 cursor-pointer"
-            key={i}
-            onClick={() => setIndex(i)}>
-            <Image
-              src={img.url}
-              alt=""
-              fill
-              sizes="30vw"
-              className="object-cover rounded-md"
-            />
-          </div>
-        ))}
-      </div>
-    </div>
+    </>
   );
 };
 

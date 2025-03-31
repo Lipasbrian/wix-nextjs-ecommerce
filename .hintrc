@@ -1,0 +1,37 @@
+{
+  "extends": [
+    "development"
+  ],
+  "hints": {
+    "compat-api/css": [
+      "default",
+      {
+        "ignore": [
+          "backdrop-filter"
+        ]
+      }
+    ],
+    "no-inline-styles": "off",
+    "typescript-config/consistent-casing": "off",
+    "axe/forms": [
+      "default",
+      {
+        "select-name": "off"
+      }
+    ],
+    "axe/aria": [
+      "default",
+      {
+        "aria-valid-attr-value": "off"
+      }
+    ]
+  },
+  "browserslist": [
+    "defaults",
+    "not ie 11",
+    "not chrome <= 109",
+    "not ios_saf <= 18",
+    "not safari <= 18",
+    "not samsung <= 25"
+  ]
+}

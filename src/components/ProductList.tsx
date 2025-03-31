@@ -1,131 +1,121 @@
+'use client'
 import Image from "next/image";
 import Link from "next/link";
+import { useCart } from "@/app/Context/CartContext";
+import { useState } from "react";
 
-const ProductList = () => {
-  return (
-    <>
-      <div className="mt-12 flex gap-x-8 gap-y-16 justify-between flex-wrap mb-12">
-        <Link
-          href="/test"
-          className="w-full flex flex-col gap-4 sm:w-[45%] lg:w-[22%]">
-          <div className="relative w-full h-80">
-            <Image
-              src="https://images.pexels.com/photos/21550488/pexels-photo-21550488/free-photo-of-blue-scooter-parked-by-a-wall.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
-              alt=""
-              fill
-              sizes="25vw"
-              className="absolute object-cover rounded-md z-10 hover:opacity-0 transition-opacity easy duration-500"
-            />
+interface Product {
+  id: string;
+  name: string;
+  price: string;
+  description: string;
+  images: {
+    primary: string;
+    hover: string;
+  };
+  href: string;
+}
 
-            <Image
-              src="https://images.pexels.com/photos/27425438/pexels-photo-27425438/free-photo-of-a-person-is-using-a-laptop-and-a-notebook.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
-              alt=""
-              fill
-              sizes="25vw"
-              className="absolute object-cover rounded-md"
-            />
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium">ProductName</span>
-            <span className="font-semibold">Ksh 4500</span>
-          </div>
-          <div className="text-sm text-gray-500">My Description</div>
-          <button className="rounded-2xl ring-1 ring-lama text-lama py-2 px-4 w-max text-xs hover:bg-lama hover:text-white">
-            Add To Cart
-          </button>
-        </Link>
+const ProductList = ({ products }: { products?: Product[] }) => {
+  const { addToCart } = useCart();
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
-        <Link
-          href="/test"
-          className="w-full flex flex-col gap-4 sm:w-[45%] lg:w-[22%]">
-          <div className="relative w-full h-80">
-            <Image
-              src="https://images.pexels.com/photos/21550488/pexels-photo-21550488/free-photo-of-blue-scooter-parked-by-a-wall.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
-              alt=""
-              fill
-              sizes="25vw"
-              className="absolute object-cover rounded-md z-10 hover:opacity-0 transition-opacity easy duration-500"
-            />
+  const handleAddToCart = async (product: Product, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setLoadingId(product.id);
 
-            <Image
-              src="https://images.pexels.com/photos/27425438/pexels-photo-27425438/free-photo-of-a-person-is-using-a-laptop-and-a-notebook.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
-              alt=""
-              fill
-              sizes="25vw"
-              className="absolute object-cover rounded-md"
-            />
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium">ProductName</span>
-            <span className="font-semibold">Ksh 4500</span>
-          </div>
-          <div className="text-sm text-gray-500">My Description</div>
-          <button className="rounded-2xl ring-1 ring-lama text-lama py-2 px-4 w-max text-xs hover:bg-lama hover:text-white">
-            Add To Cart
-          </button>
-        </Link>
+    try {
+      // Convert price from string to number (remove "Ksh " and commas)
+      const price = Number(product.price.replace(/[^\d]/g, ''));
+      
+      // Add to cart context
+      addToCart({
+        id: product.id,
+        name: product.name,
+        price: price,
+        quantity: 1
+      });
 
-        <Link
-          href="/test"
-          className="w-full flex flex-col gap-4 sm:w-[45%] lg:w-[22%]">
-          <div className="relative w-full h-80">
-            <Image
-              src="https://images.pexels.com/photos/21550488/pexels-photo-21550488/free-photo-of-blue-scooter-parked-by-a-wall.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
-              alt=""
-              fill
-              sizes="25vw"
-              className="absolute object-cover rounded-md z-10 hover:opacity-0 transition-opacity easy duration-500"
-            />
+      // Call API endpoint
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          name: product.name,
+          price: price,
+          image: product.images.primary
+        }),
+      });
 
-            <Image
-              src="https://images.pexels.com/photos/27425438/pexels-photo-27425438/free-photo-of-a-person-is-using-a-laptop-and-a-notebook.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
-              alt=""
-              fill
-              sizes="25vw"
-              className="absolute object-cover rounded-md"
-            />
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium">ProductName</span>
-            <span className="font-semibold">Ksh 4500</span>
-          </div>
-          <div className="text-sm text-gray-500">My Description</div>
-          <button className="rounded-2xl ring-1 ring-lama text-lama py-2 px-4 w-max text-xs hover:bg-lama hover:text-white">
-            Add To Cart
-          </button>
-        </Link>
+      if (!response.ok) {
+        throw new Error('Failed to add to cart');
+      }
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      // You might want to show a toast notification here
+    } finally {
+      setLoadingId(null);
+    }
+  };
 
-        <Link
-          href="/test"
-          className="w-full flex flex-col gap-4 sm:w-[45%] lg:w-[22%]">
-          <div className="relative w-full h-80">
-            <Image
-              src="https://images.pexels.com/photos/21550488/pexels-photo-21550488/free-photo-of-blue-scooter-parked-by-a-wall.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
-              alt=""
-              fill
-              sizes="25vw"
-              className="absolute object-cover rounded-md z-10 hover:opacity-0 transition-opacity easy duration-500"
-            />
-
-            <Image
-              src="https://images.pexels.com/photos/27425438/pexels-photo-27425438/free-photo-of-a-person-is-using-a-laptop-and-a-notebook.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load"
-              alt=""
-              fill
-              sizes="20vw"
-              className="absolute object-cover rounded-md"
-            />
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium">ProductName</span>
-            <span className="font-semibold">Ksh 4500</span>
-          </div>
-          <div className="text-sm text-gray-500">My Description</div>
-          <button className="rounded-2xl ring-1 ring-lama text-lama py-2 px-4 w-max text-xs hover:bg-lama hover:text-white">
-            Add To Cart
-          </button>
-        </Link>
+  if (!products || products.length === 0) {
+    return (
+      <div className="mt-12 text-center py-8">
+        <p className="text-gray-500">No products found</p>
       </div>
-    </>
+    );
+  }
+
+  return (
+    <div className="mt-12 flex gap-x-8 gap-y-16 justify-between flex-wrap mb-12">
+      {products.map((product) => (
+        <Link
+          key={product.id}
+          href={product.href}
+          className="w-full flex flex-col gap-4 sm:w-[45%] lg:w-[22%]"
+        >
+          {/* Image hover effect */}
+          <div className="relative w-full h-80">
+            <Image
+              src={product.images.hover}
+              alt={product.name}
+              fill
+              sizes="25vw"
+              className="absolute object-cover rounded-md z-10 hover:opacity-0 transition-opacity ease duration-500"
+            />
+            <Image
+              src={product.images.primary}
+              alt={product.name}
+              fill
+              sizes="25vw"
+              className="absolute object-cover rounded-md"
+            />
+          </div>
+          
+          {/* Product info */}
+          <div className="flex justify-between">
+            <span className="font-medium">{product.name}</span>
+            <span className="font-semibold">{product.price}</span>
+          </div>
+          <div className="text-sm text-gray-500">{product.description}</div>
+          
+          {/* Add to Cart button */}
+          <button 
+            onClick={(e) => handleAddToCart(product, e)}
+            disabled={loadingId === product.id}
+            className={`rounded-2xl ring-1 ring-lama text-lama py-2 px-4 w-max text-xs hover:bg-lama hover:text-white transition-colors ${
+              loadingId === product.id ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {loadingId === product.id ? 'Adding...' : 'Add To Cart'}
+          </button>
+        </Link>
+      ))}
+    </div>
   );
 };
 
