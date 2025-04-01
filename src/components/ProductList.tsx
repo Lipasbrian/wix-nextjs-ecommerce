@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/app/Context/CartContext";
@@ -27,35 +27,35 @@ const ProductList = ({ products }: { products?: Product[] }) => {
 
     try {
       // Convert price from string to number (remove "Ksh " and commas)
-      const price = Number(product.price.replace(/[^\d]/g, ''));
-      
+      const price = Number(product.price.replace(/[^\d]/g, ""));
+
       // Add to cart context
       addToCart({
         id: product.id,
         name: product.name,
         price: price,
-        quantity: 1
+        quantity: 1,
       });
 
       // Call API endpoint
-      const response = await fetch('/api/cart', {
-        method: 'POST',
+      const response = await fetch("/api/cart", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           productId: product.id,
           name: product.name,
           price: price,
-          image: product.images.primary
+          image: product.images.primary,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add to cart');
+        throw new Error("Failed to add to cart");
       }
     } catch (error) {
-      console.error('Add to cart error:', error);
+      console.error("Add to cart error:", error);
       // You might want to show a toast notification here
     } finally {
       setLoadingId(null);
@@ -76,7 +76,7 @@ const ProductList = ({ products }: { products?: Product[] }) => {
         <Link
           key={product.id}
           href={product.href}
-          className="w-full flex flex-col gap-4 sm:w-[45%] lg:w-[22%]"
+          className="w-full flex flex-col gap-4 sm:w-[45%] lg:w-[22%] z-0"
         >
           {/* Image hover effect */}
           <div className="relative w-full h-80">
@@ -95,23 +95,23 @@ const ProductList = ({ products }: { products?: Product[] }) => {
               className="absolute object-cover rounded-md"
             />
           </div>
-          
+
           {/* Product info */}
           <div className="flex justify-between">
             <span className="font-medium">{product.name}</span>
             <span className="font-semibold">{product.price}</span>
           </div>
           <div className="text-sm text-gray-500">{product.description}</div>
-          
+
           {/* Add to Cart button */}
-          <button 
+          <button
             onClick={(e) => handleAddToCart(product, e)}
             disabled={loadingId === product.id}
             className={`rounded-2xl ring-1 ring-lama text-lama py-2 px-4 w-max text-xs hover:bg-lama hover:text-white transition-colors ${
-              loadingId === product.id ? 'opacity-50 cursor-not-allowed' : ''
+              loadingId === product.id ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
-            {loadingId === product.id ? 'Adding...' : 'Add To Cart'}
+            {loadingId === product.id ? "Adding..." : "Add To Cart"}
           </button>
         </Link>
       ))}

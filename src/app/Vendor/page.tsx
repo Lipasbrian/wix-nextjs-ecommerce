@@ -1,9 +1,9 @@
 // app/vendor/analytics/page.tsx
-'use client'
-import { useVendorAnalytics } from '@/hooks/useAnalytics'
+"use client";
+import { useVendorAnalytics } from "@/hooks/useAnalytics";
 
 export default function AnalyticsDashboard() {
-  const { data, loading, error } = useVendorAnalytics()
+  const { data, loading, error } = useVendorAnalytics();
 
   if (loading) {
     return (
@@ -11,7 +11,7 @@ export default function AnalyticsDashboard() {
         <h1 className="text-2xl font-bold mb-6">Advertisement Analytics</h1>
         <p>Loading analytics data...</p>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -20,7 +20,7 @@ export default function AnalyticsDashboard() {
         <h1 className="text-2xl font-bold mb-6">Advertisement Analytics</h1>
         <p className="text-red-500">Error: {error.message}</p>
       </div>
-    )
+    );
   }
 
   if (!data) {
@@ -29,7 +29,7 @@ export default function AnalyticsDashboard() {
         <h1 className="text-2xl font-bold mb-6">Advertisement Analytics</h1>
         <p>No analytics data available</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -56,5 +56,5 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }

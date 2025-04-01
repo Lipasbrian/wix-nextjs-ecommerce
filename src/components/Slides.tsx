@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useEffect, useState } from "react"
-import Image from "next/image"
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 
 type Slide = {
-  id: number
-  title: string
-  description: string
-  img: string
-  url: string
-  bg: string
-}
+  id: number;
+  title: string;
+  description: string;
+  img: string;
+  url: string;
+  bg: string;
+};
 
 const slides: Slide[] = [
   {
@@ -30,46 +30,48 @@ const slides: Slide[] = [
     url: "/winter-banner",
     bg: "bg-gradient-to-r from-pink-50/70 to-blue-70/50",
   },
-]
+];
 
 const Slider = () => {
-  const [current, setCurrent] = useState(0)
+  const [current, setCurrent] = useState(0);
 
   // Debugging: Log slide changes
   useEffect(() => {
-    console.log('Current slide:', current, slides[current].title)
-  }, [current])
+    console.log("Current slide:", current, slides[current].title);
+  }, [current]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrent(prev => (prev === slides.length - 1 ? 0 : prev + 1))
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [])
+      setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="relative h-[70vh] w-full overflow-hidden">
+    <div className="relative h-[70vh] w-full overflow-hidden z-0">
       {/* Debugging border - remove in production */}
-      <div className="absolute inset-0 border-4 border-red-500 pointer-events-none z-30" style={{
-        display: 'none' /* Set to 'block' to visualize container bounds */
-      }} />
-      
+      <div
+        className="absolute inset-0 border-4 border-red-500 pointer-events-none z-30"
+        style={{
+          display: "none" /* Set to 'block' to visualize container bounds */,
+        }}
+      />
+
       {/* Slides Container */}
-      <div 
+      <div
         className="flex h-full transition-transform duration-1000 ease-in-out"
-        style={{ 
+        style={{
           transform: `translateX(-${current * 100}%)`,
-          width: `${slides.length * 100}%`
+          width: `${slides.length * 100}%`,
         }}
       >
         {slides.map((slide) => (
-          <div 
-            key={slide.id} 
+          <div
+            key={slide.id}
             className="w-full h-full flex-shrink-0 relative"
-            style={{ 
-              minWidth: '100%',
+            style={{
+              minWidth: "100%",
               // Debug border - remove in production
-               
             }}
           >
             {/* Image */}
@@ -80,12 +82,16 @@ const Slider = () => {
                 fill
                 className="object-cover"
                 priority
-                onLoadingComplete={() => console.log(`${slide.title} image loaded`)}
+                onLoadingComplete={() =>
+                  console.log(`${slide.title} image loaded`)
+                }
               />
             </div>
-            
+
             {/* Content */}
-            <div className={`absolute inset-0 z-10 ${slide.bg} flex items-center justify-center`}>
+            <div
+              className={`absolute inset-0 z-10 ${slide.bg} flex items-center justify-center`}
+            >
               <div className="text-center p-4 max-w-4xl">
                 <h2 className="text-xl md:text-3xl font-medium text-gray-800 mb-2">
                   {slide.description}
@@ -110,21 +116,18 @@ const Slider = () => {
           <button
             key={index}
             onClick={() => {
-              setCurrent(index)
-              console.log('Manually switched to slide:', index + 1)
+              setCurrent(index);
+              console.log("Manually switched to slide:", index + 1);
             }}
             className={`w-3 h-3 rounded-full transition-all ${
-              current === index ? 'bg-black scale-125' : 'bg-gray-300'
+              current === index ? "bg-black scale-125" : "bg-gray-300"
             }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </div>
-
-      
-      
     </div>
-  )
-}
+  );
+};
 
-export default Slider
+export default Slider;
