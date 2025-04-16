@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { validateEmail, validatePassword } from "@/app/lib/validators";
 import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
+  const { status } = useSession();
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
@@ -15,6 +17,12 @@ export default function LoginPage() {
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.push("/dashboard");
+    }
+  }, [status, router]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
