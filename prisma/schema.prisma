@@ -73,10 +73,11 @@ model Analytics {
 model VendorAnalytics {
   id          String   @id @default(cuid())
   vendorId    String
-  impressions Int
-  clicks      Int
-  ctr         Float
   date        DateTime @default(now())
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  ctr         Float    @default(0)
+  revenue     Float    @default(0) // Add this field
   vendor      User     @relation(fields: [vendorId], references: [id])
 
   @@unique([vendorId, date])
