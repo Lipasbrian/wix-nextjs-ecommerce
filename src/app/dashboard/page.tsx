@@ -28,12 +28,18 @@ export default function DashboardPage() {
         );
       case "VENDOR":
         return (
-          <div className="grid gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link
               href="/vendor/products"
               className="p-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
             >
               My Products
+            </Link>
+            <Link
+              href="/vendor/analytics"
+              className="p-4 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
+            >
+              Analytics Dashboard
             </Link>
           </div>
         );
