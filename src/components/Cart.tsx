@@ -4,6 +4,12 @@ import { useCart } from "@/app/Context/CartContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { formatCurrency } from "@/utils/formatCurrency";
+import { Product } from "@/app/types";
+
+// Define the CartItem type
+interface CartItem extends Product {
+  quantity: number;
+}
 
 type CartProps = {
   onClose: () => void;
@@ -11,11 +17,14 @@ type CartProps = {
 };
 
 export default function Cart({ onClose, showCart }: CartProps) {
-  const { cartItems, removeFromCart, updateQuantity } = useCart();
+  // Fix: use cart instead of cartItems to match your context
+  const { cart, removeFromCart, updateQuantity } = useCart();
   const router = useRouter();
 
-  const cartTotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+  // Fix: add proper types to reduce function
+  const cartTotal = cart.reduce(
+    (total: number, item: CartItem) =>
+      total + Number(item.price) * item.quantity,
     0
   );
 
@@ -54,7 +63,7 @@ export default function Cart({ onClose, showCart }: CartProps) {
           </button>
         </div>
 
-        {cartItems.length === 0 ? (
+        {cart.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8">
             <p className="text-gray-500 dark:text-gray-300">
               Your cart is empty
@@ -73,7 +82,7 @@ export default function Cart({ onClose, showCart }: CartProps) {
           <div className="space-y-4">
             {/* Cart Items */}
             <div className="max-h-[60vh] overflow-y-auto space-y-3">
-              {cartItems.map((item) => (
+              {cart.map((item: CartItem) => (
                 <div
                   key={item.id}
                   className="flex gap-4 border-b pb-3 border-gray-200 dark:border-gray-700"
@@ -83,7 +92,7 @@ export default function Cart({ onClose, showCart }: CartProps) {
                       {item.name}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {formatCurrency(item.price)} each
+                      {formatCurrency(Number(item.price))} each
                     </p>
                     <div className="flex items-center gap-2 mt-2">
                       <button

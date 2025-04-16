@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { Prisma, type PrismaClient } from "@prisma/client";
 import { rateLimit } from '@/app/lib/rate-limit';
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 type CartItemWithProduct = {
   id: string;
@@ -25,6 +27,12 @@ interface CartResponse {
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const identifier = request.headers.get("x-forwarded-for") || 'anonymous';
     const result = await rateLimit(identifier);
 
@@ -136,5 +144,21 @@ export async function POST(request: Request) {
       },
       { status: 500 }
     );
+  }
+}
+
+export async function GET(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Return empty array for now since we're using localStorage
+    return NextResponse.json([]);
+  } catch (error) {
+    console.error("Error in cart API:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

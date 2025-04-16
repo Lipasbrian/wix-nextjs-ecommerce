@@ -1,120 +1,113 @@
 "use client";
-import Image from "next/image";
-import Link from "next/link";
-import { useCart } from "@/app/Context/CartContext";
+
 import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useCart } from "@/app/Context/CartContext";
+import toast from "react-hot-toast";
+import { Product } from "@/app/types";
 
-interface Product {
-  id: string;
-  name: string;
-  price: string;
-  description: string;
-  images: {
-    primary: string;
-    hover: string;
-  };
-  href: string;
-}
+// Update the component to handle the type
+const ProductList = ({ products }: { products: Product[] }) => {
+  const [sortOrder, setSortOrder] = useState("default");
 
-const ProductList = ({ products }: { products?: Product[] }) => {
+  // Get cart context
   const { addToCart } = useCart();
-  const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  const handleAddToCart = async (product: Product, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setLoadingId(product.id);
+  // Sort products based on selected order with proper type handling
+  const sortedProducts = [...products].sort((a, b) => {
+    switch (sortOrder) {
+      case "price-asc":
+        return Number(a.price) - Number(b.price);
+      case "price-desc":
+        return Number(b.price) - Number(a.price);
+      case "name-asc":
+        return a.name.localeCompare(b.name);
+      case "name-desc":
+        return b.name.localeCompare(a.name);
+      default:
+        return 0;
+    }
+  });
 
+  // Add to cart handler
+  const handleAddToCart = (product: Product) => {
     try {
-      // Convert price from string to number (remove "Ksh " and commas)
-      const price = Number(product.price.replace(/[^\d]/g, ""));
-
-      // Add to cart context
-      addToCart({
-        id: product.id,
-        name: product.name,
-        price: price,
-        quantity: 1,
-      });
-
-      // Call API endpoint
-      const response = await fetch("/api/cart", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          productId: product.id,
-          name: product.name,
-          price: price,
-          image: product.images.primary,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to add to cart");
-      }
+      addToCart(product, 1);
+      toast.success(`Added ${product.name} to cart`);
     } catch (error) {
       console.error("Add to cart error:", error);
-      // You might want to show a toast notification here
-    } finally {
-      setLoadingId(null);
+      toast.error("Failed to add to cart");
     }
   };
 
-  if (!products || products.length === 0) {
-    return (
-      <div className="mt-12 text-center py-8">
-        <p className="text-gray-500">No products found</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-12 flex gap-x-8 gap-y-16 justify-between flex-wrap mb-12">
-      {products.map((product) => (
-        <Link
-          key={product.id}
-          href={product.href}
-          className="w-full flex flex-col gap-4 sm:w-[45%] lg:w-[22%] z-0"
+    <div>
+      {/* Sort controls */}
+      <div className="mb-6 flex justify-end">
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+          className="p-2 border rounded shadow-sm"
         >
-          {/* Image hover effect */}
-          <div className="relative w-full h-80">
-            <Image
-              src={product.images.hover}
-              alt={product.name}
-              fill
-              sizes="25vw"
-              className="absolute object-cover rounded-md z-10 hover:opacity-0 transition-opacity ease duration-500"
-            />
-            <Image
-              src={product.images.primary}
-              alt={product.name}
-              fill
-              sizes="25vw"
-              className="absolute object-cover rounded-md"
-            />
-          </div>
+          <option value="default">Default sorting</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="name-asc">Name: A to Z</option>
+          <option value="name-desc">Name: Z to A</option>
+        </select>
+      </div>
 
-          {/* Product info */}
-          <div className="flex justify-between">
-            <span className="font-medium">{product.name}</span>
-            <span className="font-semibold">{product.price}</span>
-          </div>
-          <div className="text-sm text-gray-500">{product.description}</div>
-
-          {/* Add to Cart button */}
-          <button
-            onClick={(e) => handleAddToCart(product, e)}
-            disabled={loadingId === product.id}
-            className={`rounded-2xl ring-1 ring-lama text-lama py-2 px-4 w-max text-xs hover:bg-lama hover:text-white transition-colors ${
-              loadingId === product.id ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+      {/* Product grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {sortedProducts.map((product) => (
+          <div
+            key={product.id}
+            className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
           >
-            {loadingId === product.id ? "Adding..." : "Add To Cart"}
-          </button>
-        </Link>
-      ))}
+            {/* Product image with link */}
+            <Link href={`/products/${product.id}`} className="block">
+              <div className="relative h-64 bg-gray-100">
+                {/* Handle image source with fallbacks */}
+                <Image
+                  src={
+                    product.imageUrl ||
+                    (product.images && Object.values(product.images)[0]) ||
+                    "/placeholder-product.png"
+                  }
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover"
+                />
+              </div>
+            </Link>
+
+            {/* Product details */}
+            <div className="p-4">
+              <Link href={`/products/${product.id}`} className="block">
+                <h2 className="text-lg font-medium hover:text-blue-600 transition-colors">
+                  {product.name}
+                </h2>
+              </Link>
+              <p className="text-gray-600 mt-1 text-sm line-clamp-2">
+                {product.description}
+              </p>
+              <div className="mt-3 flex justify-between items-center">
+                <span className="text-lg font-bold">
+                  ${Number(product.price).toFixed(2)}
+                </span>
+                <button
+                  onClick={() => handleAddToCart(product)}
+                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                >
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

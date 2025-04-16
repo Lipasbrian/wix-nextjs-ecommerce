@@ -1,16 +1,13 @@
 export interface Product {
-  details: any;
   id: string;
   name: string;
-  price: string; // Changed from number since your data uses string prices
   description: string;
-  href: string; // Added for product links
-  images: {
-    // Changed to match your image structure
-    primary: string;
-    hover: string;
-    details?: Array<{ title: string; content: string }>;
-  };
+  price: number;
+  imageUrl?: string;
+  images?: Record<string, string>;
+  stock?: number;
+  details: any[] | any; // Unified details type that accepts both formats
+  href?: string;
   category?: string; // Added for filtering
   size?: string; // Added for filtering
   color?: string; // Added for filtering
