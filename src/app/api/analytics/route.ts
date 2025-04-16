@@ -9,20 +9,21 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
  * Fetches analytics data for a specific vendor
  */
 export async function GET(request: Request) {
-  const identifier = request.headers.get("x-forwarded-for") || 'anonymous'
-  const { success, remaining, reset } = await rateLimit(identifier)
+  const identifier = request.headers.get("x-forwarded-for") || 'anonymous';
+  // Fix: Use the correct properties from rateLimit
+  const { isLimited, remaining, resetAt } = rateLimit(identifier);
 
-  if (!success) {
+  if (isLimited) {
     return NextResponse.json(
       { error: "Too many requests" },
       {
         status: 429,
         headers: {
           'X-RateLimit-Remaining': remaining.toString(),
-          'X-RateLimit-Reset': reset.toString()
+          'X-RateLimit-Reset': resetAt.toString()
         }
       }
-    )
+    );
   }
 
   // Parameter validation
@@ -96,6 +97,18 @@ export async function POST(request: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
+    const { isLimited, remaining, resetAt } = rateLimit(session.user.id);
+    if (isLimited) {
+      return new NextResponse("Too many requests", {
+        status: 429,
+        headers: {
+          "X-RateLimit-Limit": MAX_REQUESTS_PER_MINUTE.toString(),
+          "X-RateLimit-Remaining": remaining.toString(),
+          "X-RateLimit-Reset": resetAt.toString()
+        }
+      });
+    }
+
     const body = await request.json();
     const { impressions, clicks, timeframe } = body;
 
@@ -151,35 +164,32 @@ export async function POST(request: Request) {
   }
 }
 
-// Simple in-memory rate limiter
+// Add this improved rate limit implementation
+const RATE_LIMIT_DURATION = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_MINUTE = 10;
 const ratelimits = new Map();
 
 function rateLimit(identifier: string) {
   const now = Date.now();
-  const windowMs = 60 * 1000; // 1 minute window
-  const maxRequests = 10; // Max requests per window
 
-  const bucket = ratelimits.get(identifier) || {
+  const userRateLimit = ratelimits.get(identifier) || {
     count: 0,
-    reset: now + windowMs
+    resetAt: now + RATE_LIMIT_DURATION
   };
 
-  // Reset if the time has passed
-  if (now > bucket.reset) {
-    bucket.count = 0;
-    bucket.reset = now + windowMs;
+  // Reset if window has passed
+  if (now > userRateLimit.resetAt) {
+    userRateLimit.count = 0;
+    userRateLimit.resetAt = now + RATE_LIMIT_DURATION;
   }
 
-  // Update count
-  bucket.count++;
+  userRateLimit.count += 1;
+  ratelimits.set(identifier, userRateLimit);
 
-  // Save
-  ratelimits.set(identifier, bucket);
-
-  // Check if rate limit exceeded
-  const remaining = Math.max(0, maxRequests - bucket.count);
-  const success = bucket.count <= maxRequests;
-
-  return { success, remaining, reset: bucket.reset };
+  return {
+    isLimited: userRateLimit.count > MAX_REQUESTS_PER_MINUTE,
+    remaining: Math.max(0, MAX_REQUESTS_PER_MINUTE - userRateLimit.count),
+    resetAt: userRateLimit.resetAt
+  };
 }
 

@@ -55,17 +55,21 @@ async function main() {
             const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
             const weekendBoost = isWeekend ? 1.3 : 1;
 
-            // Replace the two create statements with just one:
-            await prisma.vendorAnalytics.create({
-                data: {
-                    vendorId: vendor.id,
-                    date,
-                    impressions: Math.floor(dailyImpressions * weekendBoost),
-                    clicks: Math.floor(dailyClicks * weekendBoost),
-                    ctr: Math.min(ctr * (isWeekend ? 1.1 : 1), 30), // Cap CTR at 30%
-                    revenue: parseFloat((dailyClicks * (Math.random() * 2 + 1)).toFixed(2))
-                }
-            });
+            try {
+                // FIXED: Only one create call with all fields
+                await prisma.vendorAnalytics.create({
+                    data: {
+                        vendorId: vendor.id,
+                        date,
+                        impressions: Math.floor(dailyImpressions * weekendBoost),
+                        clicks: Math.floor(dailyClicks * weekendBoost),
+                        ctr: Math.min(ctr * (isWeekend ? 1.1 : 1), 30), // Cap CTR at 30%
+                        revenue: parseFloat((dailyClicks * (Math.random() * 2 + 1)).toFixed(2))
+                    }
+                });
+            } catch (error) {
+                console.error(`Error creating analytics for ${vendor.email} on ${date}:`, error);
+            }
         }
 
         console.log(`Created 31 days of analytics data for ${vendor.email}`);
