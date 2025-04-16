@@ -52,7 +52,7 @@ export default function LoginPage() {
       router.push("/dashboard");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }

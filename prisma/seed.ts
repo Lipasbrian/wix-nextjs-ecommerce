@@ -4,14 +4,42 @@ import { hash } from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
-    // Create Users
-    const user1 = await prisma.user.create({
-        data: {
+    // Create Admin User
+    const adminUser = await prisma.user.upsert({
+        where: { email: 'admin@example.com' },
+        update: {},
+        create: {
+            email: 'admin@example.com',
+            name: 'Admin User',
+            password: await hash('adminpass123', 10),
+            emailVerified: new Date(),
+            role: 'ADMIN'
+        }
+    })
+
+    // Create Vendor User
+    const vendorUser = await prisma.user.upsert({
+        where: { email: 'vendor1@example.com' },
+        update: {},
+        create: {
             email: 'vendor1@example.com',
             name: 'John Vendor',
             password: await hash('password123', 10),
-            emailVerified: new Date(),  // Changed from boolean to Date
-            role: 'VENDOR'              // Added role field
+            emailVerified: new Date(),
+            role: 'VENDOR'
+        }
+    })
+
+    // Create Regular User
+    const regularUser = await prisma.user.upsert({
+        where: { email: 'user@example.com' },
+        update: {},
+        create: {
+            email: 'user@example.com',
+            name: 'Regular User',
+            password: await hash('userpass123', 10),
+            emailVerified: new Date(),
+            role: 'USER'
         }
     })
 
@@ -23,7 +51,7 @@ async function main() {
                 description: 'Get 50% off on all summer items',
                 budget: 1500.00,
                 locations: ['Nairobi', 'Mombasa'],
-                userId: user1.id
+                userId: vendorUser.id
             }
         }),
         // ... create 7 more ads
@@ -65,13 +93,25 @@ async function main() {
     await prisma.vendorAnalytics.createMany({
         data: [
             {
-                vendorId: user1.id,
+                vendorId: vendorUser.id,
                 impressions: 5000,
                 clicks: 250,
                 ctr: 0.05
             },
             // ... 7 more analytics entries
         ]
+    })
+
+    // Create VendorAnalytics with unique dates
+    const today = new Date()
+    await prisma.vendorAnalytics.createMany({
+        data: Array.from({ length: 7 }, (_, i) => ({
+            vendorId: vendorUser.id,
+            impressions: Math.floor(Math.random() * 10000),
+            clicks: Math.floor(Math.random() * 1000),
+            ctr: Math.random(),
+            date: new Date(today.setDate(today.getDate() - i)) // Different date for each entry
+        }))
     })
 }
 
