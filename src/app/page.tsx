@@ -4,61 +4,77 @@ import Slider from "@/components/Slides";
 import AdPreview from "@/components/AdPreview";
 
 const HomePage = () => {
-  const ad = {
-    title: "Quality Swords",
-    description: "Shinobi sword",
-    image: "/bb.png", // or provide a valid image URL
-    targetLocation: "Japan",
-    budget: 1000,
-  };
-  const products = [
+  const ad = [
+    // ...existing ad array...
     {
-      id: "1",
-      name: "Product 1",
-      price: "Ksh 1000",
-      description: "Description of Product 1",
-      images: {
-        primary:
-          "https://images.pexels.com/photos/2047905/pexels-photo-2047905.jpeg",
-        hover:
-          "https://images.pexels.com/photos/2047905/pexels-photo-2047905.jpeg",
-      },
-      href: "/product/1",
+      title: "Quality Swords",
+      description: "Shinobi sword",
+      image: "/bb.png",
+      targetLocation: "Japan",
+      budget: 1000,
     },
     {
-      id: "2",
-      name: "Product 2",
-      price: "Ksh 2000",
-      description: "Description of Product 2",
-      images: {
-        primary:
-          "https://images.pexels.com/photos/2047905/pexels-photo-2047905.jpeg",
-        hover:
-          "https://images.pexels.com/photos/2047905/pexels-photo-2047905.jpeg",
-      },
-      href: "/product/2",
+      title: "Samurai Armor",
+      description: "Battle-ready replicas",
+      image: "/armor.png",
+      targetLocation: "Kyoto",
+      budget: 2500,
+    },
+    {
+      title: "Ninja Gear",
+      description: "Professional stealth equipment",
+      image: "/buze.png",
+      targetLocation: "Tokyo",
+      budget: 1500,
+    },
+    {
+      title: "Traditional Katanas",
+      description: "Master-crafted swords",
+      image: "/katana.png",
+      targetLocation: "Osaka",
+      budget: 3000,
     },
   ];
+
+  const products = [
+    // ...existing products array...
+    {
+      id: "1",
+      name: "Katana",
+      description: "Hand-forged traditional Japanese sword",
+      price: "1200",
+      images: {
+        primary: "/products/katana.jpg",
+        hover: "/products/katana.jpg",
+      },
+      href: "/products/katana",
+    },
+  ];
+
+  // ...existing imports and ad array...
+
   return (
-    <div className="">
+    <div className="min-h-screen">
       <Slider />
-      <div className="mt-24 px-4 md:px-8 lg:px-16 xl:32 2xl:px-64">
-        <h1 className="text-2xl">Featured Products</h1>
+      <div className="mt-24 px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64">
+        <h2 className="text-2xl font-bold mb-8">Featured Products</h2>
         <ProductList products={products} />
       </div>
 
       <div className="mt-24">
-        <h1 className="text-2xl px-4 md:px-8 lg:px-16 xl:32 2xl:px-64 mb-12">
+        <h2 className="text-2xl font-bold px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 mb-12">
           Categories
-        </h1>
+        </h2>
         <CatergoryList />
       </div>
 
-      <div className="mt-24 px-4 md:px-8 lg:px-16 xl:32 2xl:px-64">
-        <h1 className="text-2xl">Featured Products</h1>
-        <ProductList />
+      <div className="mt-24 px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64">
+        <h2 className="text-2xl font-bold mb-8">New Arrivals</h2>
+        <ProductList products={products} />
       </div>
-      <div>
+
+      <div className="mt-24 px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative pb-8">
+        <h2 className="text-2xl font-bold mb-8">Special Offers</h2>
         <AdPreview ad={ad} />
       </div>
     </div>

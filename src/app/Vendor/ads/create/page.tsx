@@ -1,5 +1,6 @@
 "use client";
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import AdPreview from "@/components/AdPreview";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +20,35 @@ export default function CreateAd() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("userToken");
+    if (!token) {
+      router.push("/login");
+    } else {
+      setIsLoading(true);
+      fetch("/api/verifyToken", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.valid) {
+            router.push("/login");
+          } else {
+            setIsLoading(false);
+          }
+        })
+        .catch(() => {
+          router.push("/login");
+        });
+    }
+  }, [router]);
 
   const {
     register,
@@ -53,14 +83,14 @@ export default function CreateAd() {
 
   return (
     <div className="container mx-auto p-4 md:flex gap-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="md:w-1/2 space-y-6">
         {/* Title Field */}
         <div>
           <label htmlFor="title" className="block mb-2 font-medium">
             Ad Title *
           </label>
           <input
-            type=""
+            type="text" // Add this line to fix the empty type
             id="title"
             {...register("title")}
             placeholder="Enter ad title"
@@ -141,7 +171,51 @@ export default function CreateAd() {
             </p>
           )}
         </div>
+        {/* Budget Field */}
+        <div>
+          <label htmlFor="budget" className="block mb-2 font-medium">
+            Budget (KES) *
+          </label>
+          <input
+            type="number"
+            id="budget"
+            {...register("budget", { valueAsNumber: true })}
+            placeholder="Enter budget in KES"
+            className={`w-full p-3 border rounded-lg ${
+              errors.budget ? "border-red-500" : "border-gray-300"
+            }`}
+            min="500"
+            aria-invalid={errors.budget ? "true" : "false"}
+          />
+          {errors.budget && (
+            <p className="mt-1 text-sm text-red-600">{errors.budget.message}</p>
+          )}
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+        >
+          {isSubmitting ? "Creating Ad..." : "Create Ad"}
+        </button>
       </form>
+      {/* Preview Section */}
+      <div className="md:w-1/2 mt-6 md:mt-0">
+        <h2 className="text-xl font-semibold mb-4">Ad Preview</h2>
+        <AdPreview
+          ad={[
+            {
+              title: watch("title") || "Ad Title",
+              description: watch("description") || "Ad Description",
+              image: previewImage,
+              targetLocation: watch("targetLocation") || "Location",
+              budget: watch("budget") || 0,
+            },
+          ]}
+        />
+      </div>
     </div>
   );
 }

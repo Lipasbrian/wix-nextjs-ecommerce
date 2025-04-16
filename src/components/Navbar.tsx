@@ -2,17 +2,44 @@
 
 import Link from "next/link";
 import { useCart } from "@/app/Context/CartContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Menu from "./Menu";
 import SearchBar from "./SearchBar";
-
+import Image from "next/image"; // Import Image component
 import { useTheme } from "@/app/Context/Theme/ThemeContext";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const { cartItems } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false); // State for profile dropdown
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // State to check if user is logged in
   const { theme, toggleTheme } = useTheme();
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check if the user is logged in (e.g., by checking a token in localStorage)
+    const token = localStorage.getItem("userToken");
+    setIsLoggedIn(!!token); // Set to true if token exists, false otherwise
+  }, []);
+
+  const handleLogout = () => {
+    // Clear user session (implement actual logout logic here)
+    localStorage.removeItem("userToken"); // Example: Remove token from localStorage
+    setIsLoggedIn(false); // Update logged-in state
+    router.push("/login"); // Redirect to login page
+  };
+
+  const handleProfileClick = () => {
+    if (!isLoggedIn) {
+      // Redirect to login page if user is not logged in
+      router.push("/login");
+    } else {
+      // Toggle profile dropdown if user is logged in
+      setIsProfileOpen(!isProfileOpen);
+    }
+  };
 
   return (
     <header
@@ -28,11 +55,18 @@ export default function Navbar() {
           <Menu />
 
           {/* Center - Logo */}
-          <Link href="/" className="text-xl font-bold">
+          <Link href="/" className="text-xl font-bold flex items-center gap-2">
+            <Image
+              src="/favicon.ico"
+              alt="LAMA Logo"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
             <div className="text-2xl tracking-wide">LAMA</div>
           </Link>
 
-          {/* Right Side - Theme Toggle and Cart */}
+          {/* Right Side - Theme Toggle, Cart, and Profile */}
           <div className="flex items-center gap-4">
             <button
               onClick={toggleTheme}
@@ -55,6 +89,48 @@ export default function Navbar() {
                 </span>
               )}
             </button>
+
+            {/* Profile Button */}
+            <div className="relative">
+              <button
+                onClick={handleProfileClick}
+                className="p-2 text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                aria-label="Profile"
+              >
+                👤
+              </button>
+
+              {/* Profile Dropdown */}
+              {isLoggedIn && isProfileOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg z-20">
+                  <Link
+                    href="/profile"
+                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    Profile
+                  </Link>
+                  {/* Add Create Ad link here */}
+                  <Link
+                    href="/Vendor/ads/create"
+                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    Create Ad
+                  </Link>
+                  <Link
+                    href="/orders"
+                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    Orders
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -62,7 +138,14 @@ export default function Navbar() {
         <div className="hidden md:flex items-center justify-between gap-8 h-full">
           {/* Left Section - Logo and Links */}
           <div className="flex-1 flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2">
+              <Image
+                src="/favicon.ico"
+                alt="LAMA Logo"
+                width={32}
+                height={32}
+                className="rounded-full"
+              />
               <div className="text-2xl tracking-wide">LAMA</div>
             </Link>
 
@@ -73,6 +156,15 @@ export default function Navbar() {
               >
                 Home
               </Link>
+              {/* Add Create Ad link here */}
+              {isLoggedIn && (
+                <Link
+                  href="/Vendor/ads/create"
+                  className="hover:text-blue-500 dark:hover:text-blue-300"
+                >
+                  Create Ad
+                </Link>
+              )}
               <Link
                 href="/shop"
                 className="hover:text-blue-500 dark:hover:text-blue-300"
@@ -100,7 +192,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Right Section - Search, Theme, and Cart */}
+          {/* Right Section - Search, Theme, Cart, and Profile */}
           <div className="flex items-center gap-4">
             <SearchBar />
             <button
@@ -125,6 +217,41 @@ export default function Navbar() {
                 </span>
               )}
             </button>
+
+            {/* Profile Button */}
+            <div className="relative">
+              <button
+                onClick={handleProfileClick}
+                className="p-2 text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                aria-label="Profile"
+              >
+                👤
+              </button>
+
+              {/* Profile Dropdown */}
+              {isLoggedIn && isProfileOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg z-20">
+                  <Link
+                    href="/profile"
+                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    href="/orders"
+                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    Orders
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -133,9 +260,31 @@ export default function Navbar() {
           <>
             <div
               className="fixed inset-0 bg-black bg-opacity-50 z-10"
-              onClick={() => setIsCartOpen(false)}
+              onClick={() => setIsCartOpen(false)} // Close the cart when clicking the overlay
             />
-            {/* Your cart modal content here */}
+            <div className="fixed top-20 right-4 bg-white shadow-lg rounded-lg z-20 w-80 p-4">
+              <h2 className="text-lg font-bold mb-4">Your Cart</h2>
+              {cartItems.length > 0 ? (
+                <ul>
+                  {cartItems.map((item) => (
+                    <li key={item.id} className="flex justify-between mb-2">
+                      <span>{item.name}</span>
+                      <span>
+                        {item.quantity} x ${item.price}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Your cart is empty.</p>
+              )}
+              <button
+                onClick={() => setIsCartOpen(false)}
+                className="mt-4 bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition"
+              >
+                Close
+              </button>
+            </div>
           </>
         )}
       </div>

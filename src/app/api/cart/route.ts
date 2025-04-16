@@ -1,22 +1,140 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from "next/server";
+import { prisma } from "@/app/lib/prisma";
+import { Prisma, type PrismaClient } from "@prisma/client";
+import { rateLimit } from '@/app/lib/rate-limit';
+
+type CartItemWithProduct = {
+  id: string;
+  cartId: string;
+  productId: string;
+  quantity: number;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    stock: number;
+  };
+};
+
+interface CartResponse {
+  success: boolean;
+  message: string;
+  item?: CartItemWithProduct;
+  details?: string;
+}
 
 export async function POST(request: Request) {
   try {
-    const { productId } = await request.json()
-    
-    // In a real app, you would:
-    // 1. Validate the product ID
-    // 2. Add to database or session
-    // 3. Return updated cart
-    
-    return NextResponse.json(
-      { success: true, message: 'Product added to cart' },
-      { status: 200 }
-    )
+    const identifier = request.headers.get("x-forwarded-for") || 'anonymous';
+    const result = await rateLimit(identifier);
+
+    if (!result.success) {
+      return NextResponse.json<CartResponse>(
+        { success: false, message: "Too many requests" },
+        { status: 429 }
+      );
+    }
+
+    const { productId, quantity = 1 } = await request.json();
+    const sessionId = request.headers.get("x-session-id") || crypto.randomUUID();
+
+    // Validate input
+    if (!productId || typeof productId !== "string") {
+      return NextResponse.json<CartResponse>(
+        { success: false, message: "Invalid Product ID" },
+        { status: 400 }
+      );
+    }
+
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      return NextResponse.json<CartResponse>(
+        { success: false, message: "Invalid quantity" },
+        { status: 400 }
+      );
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      return NextResponse.json<CartResponse>(
+        { success: false, message: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    if (product.stock < quantity) {
+      return NextResponse.json<CartResponse>(
+        {
+          success: false,
+          message: "Not enough stock available",
+          details: `Requested: ${quantity}, Available: ${product.stock}`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Get or create cart
+    let cart = await prisma.cart.findFirst({
+      where: { sessionId },
+      include: { items: true },
+    });
+
+    if (!cart) {
+      cart = await prisma.cart.create({
+        data: { sessionId },
+        include: { items: true },
+      });
+    }
+
+    // Add or update cart item
+    const cartItem = await prisma.cartItem.upsert({
+      where: {
+        cartId_productId: {
+          cartId: cart.id,
+          productId,
+        },
+      },
+      create: {
+        cartId: cart.id,
+        productId,
+        quantity,
+      },
+      update: {
+        quantity,
+      },
+      include: {
+        product: true,
+      },
+    });
+
+    return NextResponse.json<CartResponse>(
+      {
+        success: true,
+        message: "Product added to cart",
+        item: cartItem,
+      },
+      {
+        status: 200,
+        headers: {
+          "x-session-id": sessionId,
+          "Cache-Control": "no-store",
+        },
+      }
+    );
   } catch (error) {
-    return NextResponse.json(
-      { success: false, message: 'Error adding to cart' },
+    console.error("Cart Error:", error);
+    return NextResponse.json<CartResponse>(
+      {
+        success: false,
+        message: "Failed to add to cart",
+        details:
+          process.env.NODE_ENV === "development"
+            ? (error as Error).message
+            : undefined,
+      },
       { status: 500 }
-    )
+    );
   }
 }

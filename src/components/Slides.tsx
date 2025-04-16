@@ -4,127 +4,137 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
-type Slide = {
-  id: number;
-  title: string;
-  description: string;
-  img: string;
-  url: string;
-  bg: string;
-};
-
-const slides: Slide[] = [
+const slides = [
   {
     id: 1,
     title: "Summer Sale Collection",
     description: "Sale! Up to 50% Off!",
-    img: "/winter-banner.jpg",
-    url: "/summer-banner",
-    bg: "bg-gradient-to-r from-yellow-50/70 to-pink-70/50",
+    img: "/summer-banner.jpg",
+    url: "/",
   },
   {
     id: 2,
     title: "Winter Sale Collection",
     description: "Sale! Up to 60% Off!",
     img: "/winter-banner.jpg",
-    url: "/winter-banner",
-    bg: "bg-gradient-to-r from-pink-50/70 to-blue-70/50",
+    url: "/",
   },
 ];
 
 const Slider = () => {
-  const [current, setCurrent] = useState(0);
-
-  // Debugging: Log slide changes
-  useEffect(() => {
-    console.log("Current slide:", current, slides[current].title);
-  }, [current]);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    const timer = setInterval(() => {
+      setCurrentSlide((current) =>
+        current === slides.length - 1 ? 0 : current + 1
+      );
     }, 5000);
-    return () => clearInterval(interval);
+
+    return () => clearInterval(timer);
   }, []);
 
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  const nextSlide = () => {
+    setCurrentSlide((current) =>
+      current === slides.length - 1 ? 0 : current + 1
+    );
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((current) =>
+      current === 0 ? slides.length - 1 : current - 1
+    );
+  };
+
   return (
-    <div className="relative h-[70vh] w-full overflow-hidden z-0">
-      {/* Debugging border - remove in production */}
-      <div
-        className="absolute inset-0 border-4 border-red-500 pointer-events-none z-30"
-        style={{
-          display: "none" /* Set to 'block' to visualize container bounds */,
-        }}
-      />
-
-      {/* Slides Container */}
-      <div
-        className="flex h-full transition-transform duration-1000 ease-in-out"
-        style={{
-          transform: `translateX(-${current * 100}%)`,
-          width: `${slides.length * 100}%`,
-        }}
-      >
-        {slides.map((slide) => (
-          <div
-            key={slide.id}
-            className="w-full h-full flex-shrink-0 relative"
-            style={{
-              minWidth: "100%",
-              // Debug border - remove in production
-            }}
-          >
-            {/* Image */}
-            <div className="absolute inset-0 z-0">
-              <Image
-                src={slide.img}
-                alt={slide.title}
-                fill
-                className="object-cover"
-                priority
-                onLoadingComplete={() =>
-                  console.log(`${slide.title} image loaded`)
-                }
-              />
-            </div>
-
-            {/* Content */}
+    <div className="relative w-full h-[600px]">
+      {/* Main Slider Container */}
+      <div className="relative w-full h-full overflow-hidden">
+        {/* Slides Wrapper */}
+        <div
+          className="absolute top-0 left-0 w-full h-full flex transition-transform duration-700 ease-in-out"
+          style={{
+            transform: `translateX(-${currentSlide * 100}%)`,
+          }}
+        >
+          {/* Individual Slides */}
+          {slides.map((slide) => (
             <div
-              className={`absolute inset-0 z-10 ${slide.bg} flex items-center justify-center`}
+              key={slide.id}
+              className="relative w-full h-full flex-shrink-0 overflow-hidden"
             >
-              <div className="text-center p-4 max-w-4xl">
-                <h2 className="text-xl md:text-3xl font-medium text-gray-800 mb-2">
-                  {slide.description}
-                </h2>
-                <h1 className="text-3xl md:text-6xl font-bold text-gray-900 mb-6">
-                  {slide.title} {/* Debug: Current slide ID: {slide.id} */}
-                </h1>
-                <Link href={slide.url}>
-                  <button className="bg-black text-white px-8 py-3 rounded-md hover:bg-gray-800 transition">
-                    SHOP NOW
-                  </button>
-                </Link>
+              {/* Background Image */}
+              <div className="relative w-full h-full">
+                <Image
+                  src={slide.img}
+                  alt={slide.title}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 bg-black/40" />
+              </div>
+
+              {/* Slide Content */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+                <div className="max-w-4xl mx-auto">
+                  <p className="text-2xl md:text-4xl text-white font-light mb-4 opacity-0 animate-fadeIn">
+                    {slide.description}
+                  </p>
+                  <h2
+                    className="text-4xl md:text-6xl text-white font-bold mb-8 opacity-0 animate-fadeIn"
+                    style={{ animationDelay: "0.2s" }}
+                  >
+                    {slide.title}
+                  </h2>
+                  <Link
+                    href={slide.url}
+                    className="inline-block bg-white text-black px-8 py-3 rounded-md hover:bg-gray-100 transition-colors opacity-0 animate-fadeIn"
+                    style={{ animationDelay: "0.4s" }}
+                  >
+                    Shop Now
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {/* Navigation Dots */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setCurrent(index);
-              console.log("Manually switched to slide:", index + 1);
-            }}
-            className={`w-3 h-3 rounded-full transition-all ${
-              current === index ? "bg-black scale-125" : "bg-gray-300"
-            }`}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
+        {/* Navigation Arrows */}
+        <button
+          onClick={prevSlide}
+          className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 text-white p-4 rounded-full transition-all"
+          aria-label="Previous slide"
+        >
+          ←
+        </button>
+        <button
+          onClick={nextSlide}
+          className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 text-white p-4 rounded-full transition-all"
+          aria-label="Next slide"
+        >
+          →
+        </button>
+
+        {/* Navigation Dots */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex space-x-3">
+          {slides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                currentSlide === index
+                  ? "bg-white scale-125"
+                  : "bg-white/50 hover:bg-white/75"
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

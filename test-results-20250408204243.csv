@@ -1,0 +1,5 @@
+"TestName","Email","Status","Error","Duration","Attempts","Timestamp"
+"Test Duplicate","test@example.com","Failed","{""error"":""This email is already registered""}","4.2860092","3","2025-04-08 20:42:47"
+"Test Invalid Email","invalid-email","Failed","{""error"":""Invalid email format""}","4.0525687","3","2025-04-08 20:42:52"
+"Test Weak Password","new@example.com","Failed","{""error"":""Password must be at least 8 characters""}","4.06497","3","2025-04-08 20:42:57"
+"Valid Registration","test_20250408204243@example.com","Passed",,"0.7500361","1","2025-04-08 20:42:59"
