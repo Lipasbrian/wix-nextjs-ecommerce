@@ -6,11 +6,11 @@ export interface Product {
   imageUrl?: string;
   images?: Record<string, string>;
   stock?: number;
-  details: any[] | any; // Unified details type that accepts both formats
+  details?: any[] | any; // Changed from required to optional with ?
   href?: string;
-  category?: string; // Added for filtering
-  size?: string; // Added for filtering
-  color?: string; // Added for filtering
+  category?: string;
+  size?: string;
+  color?: string;
 }
 
 // Your existing cart interfaces are good, keep them

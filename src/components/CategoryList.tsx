@@ -3,21 +3,32 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "@/app/Context/Theme/ThemeContext";
+import { useRef } from "react";
 
 const CategoryList = () => {
   const { theme } = useTheme();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Add a slug property to each category
   const categories = [
     {
       name: "Laptops",
+      slug: "laptops",
       image:
         "https://images.pexels.com/photos/2047905/pexels-photo-2047905.jpeg",
     },
-    // ...other categories
+    {
+      name: "Smartphones",
+      slug: "smartphones",
+      image:
+        "https://images.pexels.com/photos/1092671/pexels-photo-1092671.jpeg",
+    },
+    // Add more categories with slugs
   ];
 
   return (
     <div
+      ref={scrollContainerRef}
       className={`px-4 overflow-x-scroll scrollbar-hide transition-colors duration-300 ${
         theme === "dark" ? "bg-gray-900" : "bg-gray-50"
       }`}
@@ -27,7 +38,7 @@ const CategoryList = () => {
           <Link
             key={index}
             className="flex-shrink-0 group relative w-full sm:w-1/2 lg:w-1/4 xl:w-1/6"
-            href="/list"
+            href={`/category/${category.slug}`}
           >
             <div
               className={`
@@ -58,6 +69,9 @@ const CategoryList = () => {
                   }
                 `}
                 priority={index < 2}
+                onError={(e) => {
+                  e.currentTarget.src = "/placeholder.jpg";
+                }}
               />
             </div>
             <h2

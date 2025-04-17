@@ -5,17 +5,20 @@ import { useCart } from "@/app/Context/CartContext";
 import { useState, useEffect } from "react";
 import Menu from "./Menu";
 import SearchBar from "./SearchBar";
-import Image from "next/image"; // Import Image component
+import Image from "next/image";
 import { useTheme } from "@/app/Context/Theme/ThemeContext";
 import { useRouter } from "next/navigation";
 
 export default function Navbar() {
-  const { cartItems } = useCart();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false); // State for profile dropdown
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // State to check if user is logged in
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Add this line to get cart from context
+  const { cart, totalItems } = useCart();
   const { theme, toggleTheme } = useTheme();
-  const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const router = useRouter();
 
   useEffect(() => {
@@ -83,9 +86,9 @@ export default function Navbar() {
               aria-label="Cart"
             >
               <span className="text-xl">🛒</span>
-              {itemCount > 0 && (
+              {totalItems > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {itemCount}
+                  {totalItems}
                 </span>
               )}
             </button>
@@ -211,9 +214,9 @@ export default function Navbar() {
               aria-label="Cart"
             >
               <span className="text-xl">🛒</span>
-              {itemCount > 0 && (
+              {totalItems > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {itemCount}
+                  {totalItems}
                 </span>
               )}
             </button>
@@ -264,9 +267,9 @@ export default function Navbar() {
             />
             <div className="fixed top-20 right-4 bg-white shadow-lg rounded-lg z-20 w-80 p-4">
               <h2 className="text-lg font-bold mb-4">Your Cart</h2>
-              {cartItems.length > 0 ? (
+              {cart.length > 0 ? (
                 <ul>
-                  {cartItems.map((item) => (
+                  {cart.map((item) => (
                     <li key={item.id} className="flex justify-between mb-2">
                       <span>{item.name}</span>
                       <span>

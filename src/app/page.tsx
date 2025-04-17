@@ -1,11 +1,16 @@
-import CatergoryList from "@/components/CatergoryList";
+import CatergoryList from "@/components/CategoryList";
 import ProductList from "@/components/ProductList";
 import Slider from "@/components/Slides";
 import AdPreview from "@/components/AdPreview";
+import { Product } from "@/app/types";
+import { getFeaturedProducts, getNewArrivals } from "@/app/lib/products";
 
-const HomePage = () => {
+export default async function Home() {
+  // Fetch products using the functions we created
+  const featuredProducts = await getFeaturedProducts();
+  const newArrivals = await getNewArrivals();
+
   const ad = [
-    // ...existing ad array...
     {
       title: "Quality Swords",
       description: "Shinobi sword",
@@ -36,29 +41,12 @@ const HomePage = () => {
     },
   ];
 
-  const products = [
-    // ...existing products array...
-    {
-      id: "1",
-      name: "Katana",
-      description: "Hand-forged traditional Japanese sword",
-      price: "1200",
-      images: {
-        primary: "/products/katana.jpg",
-        hover: "/products/katana.jpg",
-      },
-      href: "/products/katana",
-    },
-  ];
-
-  // ...existing imports and ad array...
-
   return (
     <div className="min-h-screen">
       <Slider />
       <div className="mt-24 px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64">
         <h2 className="text-2xl font-bold mb-8">Featured Products</h2>
-        <ProductList products={products} />
+        <ProductList products={featuredProducts} />
       </div>
 
       <div className="mt-24">
@@ -70,7 +58,7 @@ const HomePage = () => {
 
       <div className="mt-24 px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64">
         <h2 className="text-2xl font-bold mb-8">New Arrivals</h2>
-        <ProductList products={products} />
+        <ProductList products={newArrivals} />
       </div>
 
       <div className="mt-24 px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative pb-8">
@@ -79,6 +67,4 @@ const HomePage = () => {
       </div>
     </div>
   );
-};
-
-export default HomePage;
+}
