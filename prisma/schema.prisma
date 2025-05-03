@@ -1,12 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -14,87 +8,83 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
-  VENDOR
-}
-
-enum OrderStatus {
-  PENDING
-  PAID
-  SHIPPED
-  DELIVERED
-  CANCELLED
-}
-
 model User {
-  id            String      @id @default(cuid())
-  name          String?
-  email         String      @unique
-  password      String
-  role          Role        @default(USER) // Changed from String to Role enum
-  emailVerified DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  carts         Cart[] // Add relation to Cart
-  ads           Ad[]
-  orders        Order[]
-  analytics     VendorAnalytics[] // Add this line
+  id              String              @id @default(cuid())
+  name            String?
+  email           String              @unique
+  password        String
+  role            Role                @default(USER)
+  emailVerified   DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  image           String?
+  accounts        Account[]
+  analyticsEvents AnalyticsEvent[]    @relation("UserEvents")
+  vendorEvents    AnalyticsEvent[]    @relation("VendorEvents")
+  carts           Cart[]
+  orders          Order[]
+  sessions        Session[]
+  analytics       VendorAdAnalytics[] @relation("VendorAdAnalytics")
+  vendorAnalytics VendorAnalytics?
+  ads             Ad[]
 }
 
 model Ad {
-  id          String      @id @default(cuid())
-  title       String
-  description String
-  budget      Float
-  locations   String[]
-  userId      String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  user        User        @relation(fields: [userId], references: [id])
-  analytics   Analytics[] @relation("AdToAnalytics")
+  id             String      @id @default(cuid())
+  title          String
+  description    String
+  image          String?
+  targetLocation String
+  budget         Float
+  status         AdStatus    @default(PENDING)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  vendorId       String
+  analytics      Analytics[]
+  vendor         User        @relation(fields: [vendorId], references: [id])
+
+  @@map("ads")
 }
 
 model Analytics {
   id          String   @id @default(cuid())
-  adId        String
+  adId        String?
   impressions Int      @default(0)
   clicks      Int      @default(0)
   date        DateTime @default(now())
-  location    String
-  ad          Ad       @relation("AdToAnalytics", fields: [adId], references: [id])
+  location    String?
+  userId      String
+  Ad          Ad?      @relation(fields: [adId], references: [id])
 
-  @@index([adId])
+  @@index([userId])
 }
 
-model VendorAnalytics {
+model VendorAdAnalytics {
   id          String   @id @default(cuid())
   vendorId    String
-  date        DateTime @default(now())
   impressions Int      @default(0)
   clicks      Int      @default(0)
   ctr         Float    @default(0)
-  revenue     Float    @default(0) // Add this field
-  vendor      User     @relation(fields: [vendorId], references: [id])
+  date        DateTime @default(now())
+  revenue     Float    @default(0)
+  vendor      User     @relation("VendorAdAnalytics", fields: [vendorId], references: [id])
 
   @@unique([vendorId, date])
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  imageUrl    String?     // Add this line
-  stock       Int         @default(0)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  deletedAt   DateTime?
-  CartItem    CartItem[]
-  OrderItem   OrderItem[]
+  id              String           @id @default(cuid())
+  name            String
+  description     String?
+  price           Float
+  stock           Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+  imageUrl        String?
+  analyticsEvents AnalyticsEvent[]
+  CartItem        CartItem[]
+  OrderItem       OrderItem[]
 
   @@index([name])
 }
@@ -110,10 +100,10 @@ model Cart {
   id        String     @id @default(cuid())
   sessionId String?    @unique
   userId    String?
-  user      User?      @relation(fields: [userId], references: [id])
-  items     CartItem[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  user      User?      @relation(fields: [userId], references: [id])
+  items     CartItem[]
 
   @@index([sessionId])
   @@index([userId])
@@ -124,10 +114,10 @@ model CartItem {
   cartId    String
   productId String
   quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
   cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
   @@unique([cartId, productId])
   @@index([productId])
@@ -138,10 +128,10 @@ model Order {
   userId    String
   status    OrderStatus @default(PENDING)
   total     Float
-  items     OrderItem[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
   user      User        @relation(fields: [userId], references: [id])
+  items     OrderItem[]
 
   @@index([userId])
   @@index([status])
@@ -175,10 +165,10 @@ model LoginAttempt {
 model Session {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expires   DateTime
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -189,12 +179,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -207,4 +197,76 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  eventType String
+  productId String
+  vendorId  String
+  userId    String?
+  timestamp DateTime @default(now())
+  metadata  Json?
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User?    @relation("UserEvents", fields: [userId], references: [id])
+  vendor    User     @relation("VendorEvents", fields: [vendorId], references: [id])
+
+  @@index([eventType])
+  @@index([productId])
+  @@index([vendorId])
+  @@index([userId])
+  @@index([timestamp])
+}
+
+model VendorAnalytics {
+  id                 String   @id @default(cuid())
+  vendorId           String   @unique
+  addToCartEvents    Json
+  averageOrderValue  Float    @default(0)
+  createdAt          DateTime @default(now())
+  mostViewedProducts Json
+  salesByMonth       Json
+  topSellingProducts Json
+  totalOrders        Int      @default(0)
+  totalRevenue       Float    @default(0)
+  updatedAt          DateTime @updatedAt
+  vendor             User     @relation(fields: [vendorId], references: [id])
+}
+
+model Settings {
+  id                                Int      @id @default(1)
+  siteName                          String   @default("Your E-commerce Platform")
+  logoUrl                           String?
+  primaryColor                      String   @default("#3B82F6")
+  currencySymbol                    String   @default("$")
+  currencyCode                      String   @default("USD")
+  taxRate                           Float    @default(8.5)
+  allowGuestCheckout                Boolean  @default(true)
+  requireEmailVerification          Boolean  @default(true)
+  vendorApplicationRequiresApproval Boolean  @default(true)
+  showOutOfStockProducts            Boolean  @default(true)
+  productsPerPage                   Int      @default(12)
+  maintenanceMode                   Boolean  @default(false)
+  updatedAt                         DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+  VENDOR
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum AdStatus {
+  PENDING
+  ACTIVE
+  PAUSED
+  COMPLETED
 }

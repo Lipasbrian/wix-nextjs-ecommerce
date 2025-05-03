@@ -1,33 +1,51 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useEffect, useState, useRef, useReducer, useCallback } from "react";
-import Image from "next/image";
+import Link from 'next/link';
+import { useEffect, useRef, useReducer, useCallback } from 'react';
+import Image from 'next/image';
+import { FC } from 'react';
+
+export interface Slide {
+  id: string;
+  image: string;
+  alt: string;
+  title: string;
+  description: string;
+  url: string;
+}
+
+interface SliderProps {
+  slides: Slide[];
+  autoPlay?: boolean;
+  interval?: number;
+}
 
 const slides = [
   {
-    id: 1,
-    title: "Summer Sale Collection",
-    description: "Sale! Up to 50% Off!",
-    img: "/summer-banner.jpg",
-    url: "/",
+    id: '1',
+    title: 'Summer Sale Collection',
+    description: 'Sale! Up to 50% Off!',
+    image: '/summer-banner.jpg',
+    alt: 'Summer Sale',
+    url: '/',
   },
   {
-    id: 2,
-    title: "Winter Sale Collection",
-    description: "Sale! Up to 60% Off!",
-    img: "/winter-banner.jpg",
-    url: "/",
+    id: '2',
+    title: 'Winter Sale Collection',
+    description: 'Sale! Up to 60% Off!',
+    image: '/winter-banner.jpg',
+    alt: 'Winter Sale',
+    url: '/',
   },
 ];
 
 // Define reducer actions for better state management
 type SliderAction =
-  | { type: "NEXT" }
-  | { type: "PREV" }
-  | { type: "GOTO"; payload: number }
-  | { type: "PAUSE" }
-  | { type: "RESUME" };
+  | { type: 'NEXT' }
+  | { type: 'PREV' }
+  | { type: 'GOTO'; payload: number }
+  | { type: 'PAUSE' }
+  | { type: 'RESUME' };
 
 type SliderState = {
   currentSlide: number;
@@ -39,29 +57,29 @@ const sliderReducer = (
   action: SliderAction
 ): SliderState => {
   switch (action.type) {
-    case "NEXT":
+    case 'NEXT':
       return {
         ...state,
         currentSlide:
           state.currentSlide === slides.length - 1 ? 0 : state.currentSlide + 1,
       };
-    case "PREV":
+    case 'PREV':
       return {
         ...state,
         currentSlide:
           state.currentSlide === 0 ? slides.length - 1 : state.currentSlide - 1,
       };
-    case "GOTO":
+    case 'GOTO':
       return {
         ...state,
         currentSlide: action.payload,
       };
-    case "PAUSE":
+    case 'PAUSE':
       return {
         ...state,
         isPaused: true,
       };
-    case "RESUME":
+    case 'RESUME':
       return {
         ...state,
         isPaused: false,
@@ -71,7 +89,11 @@ const sliderReducer = (
   }
 };
 
-export default function Slider() {
+const Slider: FC<SliderProps> = ({
+  slides,
+  autoPlay = true,
+  interval = 3000,
+}) => {
   const [state, dispatch] = useReducer(sliderReducer, {
     currentSlide: 0,
     isPaused: false,
@@ -84,40 +106,40 @@ export default function Slider() {
 
   // Memoized navigation functions
   const goToSlide = useCallback((index: number) => {
-    dispatch({ type: "GOTO", payload: index });
+    dispatch({ type: 'GOTO', payload: index });
   }, []);
 
   const nextSlide = useCallback(() => {
-    dispatch({ type: "NEXT" });
+    dispatch({ type: 'NEXT' });
   }, []);
 
   const prevSlide = useCallback(() => {
-    dispatch({ type: "PREV" });
+    dispatch({ type: 'PREV' });
   }, []);
 
   // Auto-advance slides
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || !autoPlay) return;
 
     const timer = setInterval(() => {
-      dispatch({ type: "NEXT" });
-    }, 5000);
+      dispatch({ type: 'NEXT' });
+    }, interval);
 
     return () => clearInterval(timer);
-  }, [isPaused]);
+  }, [isPaused, autoPlay, interval]);
 
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
+      if (e.key === 'ArrowLeft') {
         prevSlide();
-      } else if (e.key === "ArrowRight") {
+      } else if (e.key === 'ArrowRight') {
         nextSlide();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [nextSlide, prevSlide]);
 
   // Touch event handlers
@@ -142,10 +164,10 @@ export default function Slider() {
   return (
     <div
       className="relative w-full h-[600px]"
-      onMouseEnter={() => dispatch({ type: "PAUSE" })}
-      onMouseLeave={() => dispatch({ type: "RESUME" })}
-      onFocus={() => dispatch({ type: "PAUSE" })}
-      onBlur={() => dispatch({ type: "RESUME" })}
+      onMouseEnter={() => dispatch({ type: 'PAUSE' })}
+      onMouseLeave={() => dispatch({ type: 'RESUME' })}
+      onFocus={() => dispatch({ type: 'PAUSE' })}
+      onBlur={() => dispatch({ type: 'RESUME' })}
       ref={sliderRef}
       role="region"
       aria-roledescription="carousel"
@@ -182,8 +204,8 @@ export default function Slider() {
                 <div className="relative w-full h-full">
                   {isVisible ? (
                     <Image
-                      src={slide.img}
-                      alt={slide.title}
+                      src={slide.image}
+                      alt={slide.alt}
                       fill
                       className="object-cover"
                       priority={index === 0} // Only prioritize first slide
@@ -206,14 +228,14 @@ export default function Slider() {
                       </p>
                       <h2
                         className="text-4xl md:text-6xl text-white font-bold mb-8 opacity-0 animate-fadeIn"
-                        style={{ animationDelay: "0.2s" }}
+                        style={{ animationDelay: '0.2s' }}
                       >
                         {slide.title}
                       </h2>
                       <Link
                         href={slide.url}
                         className="inline-block bg-white text-black px-8 py-3 rounded-md hover:bg-gray-100 transition-colors opacity-0 animate-fadeIn focus:ring-2 focus:ring-white focus:ring-offset-2 focus:outline-none"
-                        style={{ animationDelay: "0.4s" }}
+                        style={{ animationDelay: '0.4s' }}
                       >
                         Shop Now
                       </Link>
@@ -252,8 +274,8 @@ export default function Slider() {
               onClick={() => goToSlide(index)}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
                 currentSlide === index
-                  ? "bg-white scale-125"
-                  : "bg-white/50 hover:bg-white/75"
+                  ? 'bg-white scale-125'
+                  : 'bg-white/50 hover:bg-white/75'
               } focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-1`}
               aria-label={`Go to slide ${index + 1}`}
               aria-selected={currentSlide === index}
@@ -272,4 +294,6 @@ export default function Slider() {
       </div>
     </div>
   );
-}
+};
+
+export default Slider;

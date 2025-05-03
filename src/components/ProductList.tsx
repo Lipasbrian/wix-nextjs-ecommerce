@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useCart } from "@/app/Context/CartContext";
-import toast from "react-hot-toast";
-import { Product } from "@/app/types";
+import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useCart } from '@/app/Context/CartContext';
+import toast from 'react-hot-toast';
+import { Product } from '@/app/types';
 
 // Update the component to handle the type
 const ProductList = ({ products }: { products: Product[] }) => {
-  const [sortOrder, setSortOrder] = useState("default");
+  const [sortOrder, setSortOrder] = useState('default');
 
   // Get cart context
   const { addToCart } = useCart();
@@ -17,13 +17,13 @@ const ProductList = ({ products }: { products: Product[] }) => {
   // Sort products based on selected order with proper type handling
   const sortedProducts = [...products].sort((a, b) => {
     switch (sortOrder) {
-      case "price-asc":
+      case 'price-asc':
         return Number(a.price) - Number(b.price);
-      case "price-desc":
+      case 'price-desc':
         return Number(b.price) - Number(a.price);
-      case "name-asc":
+      case 'name-asc':
         return a.name.localeCompare(b.name);
-      case "name-desc":
+      case 'name-desc':
         return b.name.localeCompare(a.name);
       default:
         return 0;
@@ -36,8 +36,8 @@ const ProductList = ({ products }: { products: Product[] }) => {
       addToCart(product, 1);
       toast.success(`Added ${product.name} to cart`);
     } catch (error) {
-      console.error("Add to cart error:", error);
-      toast.error("Failed to add to cart");
+      console.error('Add to cart error:', error);
+      toast.error('Failed to add to cart');
     }
   };
 
@@ -73,7 +73,7 @@ const ProductList = ({ products }: { products: Product[] }) => {
                   src={
                     product.imageUrl ||
                     (product.images && Object.values(product.images)[0]) ||
-                    "/placeholder-product.png"
+                    '/placeholder-product.png'
                   }
                   alt={product.name}
                   fill

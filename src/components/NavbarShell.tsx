@@ -1,9 +1,9 @@
-import Link from "next/link";
-import Image from "next/image";
-import SearchBar from "./SearchBar";
-import Menu from "./Menu";
-import { useState } from "react";
-import { useTheme } from "@/app/Context/Theme/ThemeContext";
+import Link from 'next/link';
+import Image from 'next/image';
+import SearchBar from './SearchBar';
+import Menu from './Menu';
+import { useState } from 'react';
+import { useTheme } from '@/app/Context/Theme/ThemeContext';
 
 export default function NavbarShell({
   itemCount,
@@ -44,9 +44,15 @@ export default function NavbarShell({
         <div className="hidden md:flex items-center justify-between gap-8 h-full">
           {/* Left Section */}
           <div className="w-1/3 xl:w-1/2 flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-3">
-              <Image src="/logo.png" alt="LAMA Logo" width={24} height={24} />
-              <div className="text-2xl tracking-wide">LAMA</div>
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/favicon.ico"
+                alt="LAMA Logo"
+                width={32}
+                height={32}
+                className="h-8 w-8"
+              />
+              <span className="ml-2 text-xl font-bold">LAMA</span>
             </Link>
             <div className="hidden xl:flex gap-4">
               <Link href="/">Homepage</Link>
@@ -66,10 +72,10 @@ export default function NavbarShell({
                 onClick={toggleTheme}
                 className="p-2 text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                 aria-label={`Switch to ${
-                  theme === "light" ? "dark" : "light"
+                  theme === 'light' ? 'dark' : 'light'
                 } mode`}
               >
-                {theme === "light" ? "🌑" : "☀️"}
+                {theme === 'light' ? '🌑' : '☀️'}
               </button>
 
               {/* Cart Button */}

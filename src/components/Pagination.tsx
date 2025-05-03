@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 interface PaginationProps {
   totalPages: number;
@@ -16,12 +16,13 @@ export default function Pagination({
   const { replace } = useRouter();
 
   const createPageURL = (pageNumber: number) => {
-    const params = new URLSearchParams(searchParams);
-    params.set("page", pageNumber.toString());
+    // Handle null searchParams safely
+    const params = new URLSearchParams(searchParams?.toString() || '');
+    params.set('page', pageNumber.toString());
     return `${pathname}?${params.toString()}`;
   };
 
-  // Don't render if only one page
+  // Remove unused functions and variables
   if (totalPages <= 1) return null;
 
   const handlePageChange = (page: number) => {
@@ -45,8 +46,8 @@ export default function Pagination({
             onClick={() => handlePageChange(i + 1)}
             className={`w-8 h-8 flex items-center justify-center rounded ${
               currentPage === i + 1
-                ? "bg-blue-500 text-white"
-                : "bg-white border"
+                ? 'bg-blue-500 text-white'
+                : 'bg-white border'
             }`}
           >
             {i + 1}

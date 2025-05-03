@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import React, { useState, useRef, useEffect } from "react";
-import Image from "next/image";
-import { useCart as useCartHook } from "@/app/Context/CartContext"; // Assuming you have a cart context
-import { Product } from "@/app/types";
+import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
+import { useCart } from '@/app/Context/CartContext'; // Assuming you have a cart context
+import { Product } from '@/app/types';
+import { trackEvent, EventTypes } from '@/lib/analytics';
 
 // Improved type definitions for product details
 interface ProductDetail {
@@ -26,32 +27,29 @@ const SinglePage = ({ product, relatedProducts = [] }: Props) => {
   const imgRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Cart context (mock implementation if you don't have one)
-  const { addToCart } = useCartHook?.() || {
-    addToCart: (product: Product, quantity: number) =>
-      console.log("Added to cart:", product, "Quantity:", quantity),
-  };
+  const { addToCart } = useCart();
 
   // Filter valid image URLs
   const validImages = Object.values(product?.images || {}).filter(
-    (image): image is string => typeof image === "string" && image.length > 0
+    (image): image is string => typeof image === 'string' && image.length > 0
   );
 
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
+      if (e.key === 'ArrowLeft') {
         setSelectedImage((prev) =>
           prev > 0 ? prev - 1 : validImages.length - 1
         );
-      } else if (e.key === "ArrowRight") {
+      } else if (e.key === 'ArrowRight') {
         setSelectedImage((prev) =>
           prev < validImages.length - 1 ? prev + 1 : 0
         );
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [validImages.length]);
 
   // Set focus to the selected thumbnail
@@ -89,6 +87,27 @@ const SinglePage = ({ product, relatedProducts = [] }: Props) => {
     }
   };
 
+  // Track view when component mounts
+  useEffect(() => {
+    if (product?.id) {
+      // For vendorId, either update your Product type or use a default
+      const vendorId = 'default-vendor-id'; // Use an actual ID in production
+      trackEvent(EventTypes.VIEW_PRODUCT, product.id, vendorId);
+    }
+  }, [product]);
+
+  // Add to cart handler
+  const handleAddToCart = () => {
+    addToCart(product, quantity);
+
+    // Track the event
+    const vendorId = 'default-vendor-id'; // Use an actual ID in production
+    trackEvent(EventTypes.ADD_TO_CART, product.id, vendorId, {
+      quantity,
+      price: product.price,
+    });
+  };
+
   // Loading/Error states
   if (!product) {
     return (
@@ -123,11 +142,11 @@ const SinglePage = ({ product, relatedProducts = [] }: Props) => {
           )}
 
           <Image
-            src={validImages[selectedImage] || "/placeholder-product.png"}
+            src={validImages[selectedImage] || '/placeholder-product.png'}
             alt={product.name}
             fill
             className={`object-contain transition-transform duration-200 ${
-              isZoomed ? "scale-150" : "scale-100"
+              isZoomed ? 'scale-150' : 'scale-100'
             }`}
             style={
               isZoomed
@@ -155,11 +174,11 @@ const SinglePage = ({ product, relatedProducts = [] }: Props) => {
               }} // Fix: Don't return anything
               className={`relative w-20 h-20 cursor-pointer border-2 ${
                 selectedImage === index
-                  ? "border-blue-500"
-                  : "border-transparent"
+                  ? 'border-blue-500'
+                  : 'border-transparent'
               } hover:border-blue-300 transition-colors`}
               onClick={() => setSelectedImage(index)}
-              onKeyDown={(e) => e.key === "Enter" && setSelectedImage(index)}
+              onKeyDown={(e) => e.key === 'Enter' && setSelectedImage(index)}
               role="tab"
               tabIndex={0}
               aria-selected={selectedImage === index}
@@ -189,7 +208,7 @@ const SinglePage = ({ product, relatedProducts = [] }: Props) => {
               <svg
                 key={star}
                 className={`w-4 h-4 ${
-                  star <= 4 ? "text-yellow-400" : "text-gray-300"
+                  star <= 4 ? 'text-yellow-400' : 'text-gray-300'
                 }`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
@@ -241,7 +260,7 @@ const SinglePage = ({ product, relatedProducts = [] }: Props) => {
         {/* Add to Cart Button */}
         <button
           className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
-          onClick={() => addToCart(product, quantity)}
+          onClick={handleAddToCart}
           aria-label={`Add ${quantity} ${product.name} to cart`}
         >
           <svg
@@ -275,66 +294,42 @@ const SinglePage = ({ product, relatedProducts = [] }: Props) => {
         <div className="mt-12 w-full">
           <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {relatedProducts
-              .slice(0, 4)
-              .map((relatedProduct, index: number) => (
-                <div
-                  key={relatedProduct.id}
-                  className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
-                >
-                  <div className="relative h-48">
-                    <Image
-                      src={
-                        relatedProduct.images &&
-                        Object.values(relatedProduct.images).length > 0
-                          ? Object.values(relatedProduct.images).filter(
-                              (image): image is string =>
-                                typeof image === "string"
-                            )[0]
-                          : relatedProduct.imageUrl ||
-                            "/placeholder-product.png"
-                      }
-                      alt={relatedProduct.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-medium text-sm mb-1 truncate">
-                      {relatedProduct.name}
-                    </h3>
-                    <p className="text-blue-600">
-                      ${Number(relatedProduct.price).toFixed(2)}
-                    </p>
-                  </div>
+            {relatedProducts.slice(0, 4).map((relatedProduct, _index) => (
+              <div
+                key={relatedProduct.id}
+                className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+              >
+                <div className="relative h-48">
+                  <Image
+                    src={
+                      relatedProduct.images &&
+                      Object.values(relatedProduct.images).length > 0
+                        ? Object.values(relatedProduct.images).filter(
+                            (image): image is string =>
+                              typeof image === 'string'
+                          )[0]
+                        : relatedProduct.imageUrl || '/placeholder-product.png'
+                    }
+                    alt={relatedProduct.name}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
-              ))}
+                <div className="p-4">
+                  <h3 className="font-medium text-sm mb-1 truncate">
+                    {relatedProduct.name}
+                  </h3>
+                  <p className="text-blue-600">
+                    ${Number(relatedProduct.price).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
     </div>
   );
 };
-
-// Simple Error Boundary Component
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }> {
-  state = { hasError: false };
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-4 bg-red-50 text-red-600 rounded">
-          Something went wrong loading this content.
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
 
 export default SinglePage;

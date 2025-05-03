@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
 import { VendorAnalytics, AnalyticsError } from "@/types/analytics";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth";  // Changed from @auth/nextjs
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 /**
@@ -9,49 +9,84 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
  * Fetches analytics data for a specific vendor
  */
 export async function GET(request: Request) {
-  const identifier = request.headers.get("x-forwarded-for") || 'anonymous';
-  // Fix: Use the correct properties from rateLimit
-  const { isLimited, remaining, resetAt } = rateLimit(identifier);
-
-  if (isLimited) {
-    return NextResponse.json(
-      { error: "Too many requests" },
-      {
-        status: 429,
-        headers: {
-          'X-RateLimit-Remaining': remaining.toString(),
-          'X-RateLimit-Reset': resetAt.toString()
-        }
-      }
-    );
-  }
-
-  // Parameter validation
-  const { searchParams } = new URL(request.url);
-  const vendorId = searchParams.get("vendorId");
-
-  if (!vendorId) {
-    return NextResponse.json<AnalyticsError>(
-      { error: "Vendor ID is required" },
-      { status: 400 }
-    );
-  }
-
   try {
-    // Replace with mock data if using the mock implementation
-    const analyticsData = await prisma.vendorAnalytics.findMany().catch(() => {
-      // Return mock data if using mock implementation
-      return [
-        { date: new Date(), revenue: 1200, orders: 10 },
-        { date: new Date(), revenue: 1500, orders: 12 }
-      ];
+    const { searchParams } = new URL(request.url);
+    const vendorId = searchParams.get('vendorId');
+
+    if (!vendorId) {
+      const error: AnalyticsError = {
+        error: 'Vendor ID is required',
+      };
+      return NextResponse.json(error, { status: 400 });
+    }
+
+    // Query VendorAnalytics instead of Analytics
+    const analyticsData = await prisma.vendorAnalytics.findFirst({
+      where: {
+        vendorId: vendorId
+      },
+      orderBy: {
+        date: 'desc'
+      }
     });
 
-    return NextResponse.json(analyticsData);
-  } catch (error) {
-    console.error("Error fetching analytics:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    if (!analyticsData) {
+      return NextResponse.json({ error: 'No analytics found' }, { status: 404 });
+    }
+
+    // Transform to match your VendorAnalytics type
+    const response: VendorAnalytics = {
+      vendorId: analyticsData.vendorId,
+      impressions: analyticsData.impressions,
+      clicks: analyticsData.clicks,
+      ctr: analyticsData.ctr,
+      revenue: analyticsData.revenue,
+      lastUpdated: analyticsData.date,
+      // Add aggregated data
+      daily: await getAggregatedData(vendorId, 'day'),
+      weekly: await getAggregatedData(vendorId, 'week'),
+      monthly: await getAggregatedData(vendorId, 'month')
+    };
+
+    return NextResponse.json(response);
+  } catch (err: unknown) {
+    const error = err as Error;
+    const analyticsError: AnalyticsError = {
+      error: 'Failed to fetch analytics',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    };
+    return NextResponse.json(analyticsError, { status: 500 });
   }
+}
+
+async function getAggregatedData(vendorId: string, timeframe: 'day' | 'week' | 'month') {
+  const dateFilter = {
+    day: new Date(Date.now() - 24 * 60 * 60 * 1000),
+    week: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    month: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  };
+
+  const aggregated = await prisma.vendorAnalytics.aggregate({
+    where: {
+      vendorId,
+      date: {
+        gte: dateFilter[timeframe]
+      }
+    },
+    _sum: {
+      impressions: true,
+      clicks: true,
+      revenue: true
+    }
+  });
+
+  const sum = aggregated._sum;
+  return {
+    impressions: sum.impressions || 0,
+    clicks: sum.clicks || 0,
+    revenue: sum.revenue || 0,
+    ctr: sum.clicks && sum.impressions ? (sum.clicks / sum.impressions) * 100 : 0
+  };
 }
 
 // Helper function to predict future values using linear regression

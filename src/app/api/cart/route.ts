@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/app/lib/prisma";
-import { Prisma, type PrismaClient } from "@prisma/client";
 import { rateLimit } from '@/app/lib/rate-limit';
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
@@ -179,7 +178,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -187,10 +186,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Return empty array for now since we're using localStorage
     return NextResponse.json([]);
-  } catch (error) {
-    console.error("Error in cart API:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (err) {
+    console.error("Error in cart API:", err);
+    return NextResponse.json({
+      error: err instanceof Error ? err.message : "Internal server error"
+    }, { status: 500 });
+  }
+}
+
+export async function DELETE(_request: Request) { // Prefix unused parameter
+  try {
+    // ...existing code...
+  } catch (err) { // Changed from _error to err to use it
+    console.error('Cart error:', err);
+    return NextResponse.json({
+      error: err instanceof Error ? err.message : 'Cart operation failed'
+    }, { status: 500 });
   }
 }

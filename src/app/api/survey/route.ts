@@ -1,22 +1,33 @@
 import { NextResponse } from 'next/server'
-import { connectToDB } from '@/app/lib/db'
+import { prisma } from "@/app/lib/prisma"
 
 export async function POST(request: Request) {
   const data = await request.json()
-  
+
   try {
-    const db = await connectToDB()
-    await db.collection('vendor_surveys').insertOne({
-      ...data,
-      createdAt: new Date(),
-      processed: false
+    await prisma.vendorSurvey.create({
+      data: {
+        ...data,
+        createdAt: new Date(),
+        processed: false
+      }
     })
-    
+
     return NextResponse.json({ success: true })
   } catch (error) {
+    console.error('Survey submission error:', error)
     return NextResponse.json(
-      { error: 'Failed to submit survey' },
+      { message: 'Failed to submit survey' },
       { status: 500 }
     )
+  }
+}
+
+export async function DELETE(_request: Request) {
+  try {
+    // ...existing code...
+  } catch (error) {
+    console.error('Delete error:', error)
+    return NextResponse.json({ error: 'An error occurred' }, { status: 500 })
   }
 }

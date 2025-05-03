@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/app/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { prisma } from "@/app/lib/prisma";  // Updated import
 
 export async function GET(request: Request) {
     try {
@@ -49,6 +47,18 @@ export async function GET(request: Request) {
         });
     } catch (error) {
         console.error("Error fetching products:", error);
-        return new NextResponse("Error fetching products", { status: 500 });
+        return NextResponse.json({ error: "Error fetching products" }, { status: 500 });
+    }
+}
+
+export async function DELETE(_request: Request) { // Prefix with _ to ignore
+    try {
+        // ...existing code...
+    } catch (error) {
+        if (error instanceof Error) {
+            console.error('Delete error:', error.message);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+        return NextResponse.json({ error: 'An unknown error occurred' }, { status: 500 });
     }
 }

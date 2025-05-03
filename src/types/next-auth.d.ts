@@ -5,15 +5,8 @@ declare module "next-auth" {
         user: {
             id: string
             email: string
-            name?: string | null
-            role: "USER" | "ADMIN" | "VENDOR"
+            name?: string
+            role: 'USER' | 'ADMIN' | 'VENDOR'
         }
-    }
-
-    interface User {
-        id: string
-        email: string
-        name?: string | null
-        role: "USER" | "ADMIN" | "VENDOR"
     }
 }

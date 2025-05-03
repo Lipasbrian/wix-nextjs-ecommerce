@@ -1,296 +1,163 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useCart } from "@/app/Context/CartContext";
-import { useState, useEffect } from "react";
-import Menu from "./Menu";
-import SearchBar from "./SearchBar";
-import Image from "next/image";
-import { useTheme } from "@/app/Context/Theme/ThemeContext";
-import { useRouter } from "next/navigation";
+import { useSession, signOut } from 'next-auth/react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useState } from 'react';
+import { FiUser, FiShoppingCart, FiMoon, FiSun } from 'react-icons/fi';
+import { useTheme } from '@/app/Context/Theme/ThemeContext';
+import { useCart } from '@/app/Context/CartContext';
+import Cart from '@/components/Cart';
 
 export default function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // Add this line to get cart from context
-  const { cart, totalItems } = useCart();
+  const { data: session } = useSession();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showCart, setShowCart] = useState(false);
+  const { cart } = useCart();
   const { theme, toggleTheme } = useTheme();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Check if the user is logged in (e.g., by checking a token in localStorage)
-    const token = localStorage.getItem("userToken");
-    setIsLoggedIn(!!token); // Set to true if token exists, false otherwise
-  }, []);
-
-  const handleLogout = () => {
-    // Clear user session (implement actual logout logic here)
-    localStorage.removeItem("userToken"); // Example: Remove token from localStorage
-    setIsLoggedIn(false); // Update logged-in state
-    router.push("/login"); // Redirect to login page
-  };
-
-  const handleProfileClick = () => {
-    if (!isLoggedIn) {
-      // Redirect to login page if user is not logged in
-      router.push("/login");
-    } else {
-      // Toggle profile dropdown if user is logged in
-      setIsProfileOpen(!isProfileOpen);
-    }
-  };
 
   return (
-    <header
-      className={`sticky top-0 z-10 h-20 shadow-sm ${
-        theme === "dark"
-          ? "bg-gray-900 text-gray-100"
-          : "bg-white text-gray-900"
-      }`}
-    >
-      <div className="h-full px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
-        {/* Mobile Layout */}
-        <div className="md:hidden h-full flex items-center justify-between">
-          <Menu />
-
-          {/* Center - Logo */}
-          <Link href="/" className="text-xl font-bold flex items-center gap-2">
-            <Image
-              src="/favicon.ico"
-              alt="LAMA Logo"
-              width={24}
-              height={24}
-              className="rounded-full"
-            />
-            <div className="text-2xl tracking-wide">LAMA</div>
-          </Link>
-
-          {/* Right Side - Theme Toggle, Cart, and Profile */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={toggleTheme}
-              className="p-2 text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-              aria-label={`Switch to ${
-                theme === "light" ? "dark" : "light"
-              } mode`}
-            >
-              {theme === "light" ? "🌑" : "☀️"}
-            </button>
-            <button
-              onClick={() => setIsCartOpen(!isCartOpen)}
-              className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-              aria-label="Cart"
-            >
-              <span className="text-xl">🛒</span>
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
-            </button>
-
-            {/* Profile Button */}
-            <div className="relative">
-              <button
-                onClick={handleProfileClick}
-                className="p-2 text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                aria-label="Profile"
-              >
-                👤
-              </button>
-
-              {/* Profile Dropdown */}
-              {isLoggedIn && isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg z-20">
-                  <Link
-                    href="/profile"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  >
-                    Profile
-                  </Link>
-                  {/* Add Create Ad link here */}
-                  <Link
-                    href="/Vendor/ads/create"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  >
-                    Create Ad
-                  </Link>
-                  <Link
-                    href="/orders"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  >
-                    Orders
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop Layout */}
-        <div className="hidden md:flex items-center justify-between gap-8 h-full">
-          {/* Left Section - Logo and Links */}
-          <div className="flex-1 flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2">
+    <nav className="bg-white dark:bg-gray-800 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center space-x-4">
+            <Link href="/" className="flex items-center">
               <Image
                 src="/favicon.ico"
-                alt="LAMA Logo"
+                alt="LAMA"
                 width={32}
                 height={32}
-                className="rounded-full"
+                className="h-8 w-8"
               />
-              <div className="text-2xl tracking-wide">LAMA</div>
+              <span className="ml-2 text-xl font-bold">LAMA</span>
             </Link>
 
-            <div className="hidden xl:flex gap-4">
-              <Link
-                href="/"
-                className="hover:text-blue-500 dark:hover:text-blue-300"
-              >
-                Home
-              </Link>
-              {/* Add Create Ad link here */}
-              {isLoggedIn && (
-                <Link
-                  href="/Vendor/ads/create"
-                  className="hover:text-blue-500 dark:hover:text-blue-300"
-                >
-                  Create Ad
-                </Link>
-              )}
-              <Link
-                href="/shop"
-                className="hover:text-blue-500 dark:hover:text-blue-300"
-              >
+            <div className="hidden md:flex items-center space-x-4">
+              <Link href="/shop" className="nav-link">
                 Shop
               </Link>
-              <Link
-                href="/deals"
-                className="hover:text-blue-500 dark:hover:text-blue-300"
-              >
+              <Link href="/deals" className="nav-link">
                 Deals
               </Link>
-              <Link
-                href="/about"
-                className="hover:text-blue-500 dark:hover:text-blue-300"
-              >
+              <Link href="/about" className="nav-link">
                 About
               </Link>
-              <Link
-                href="/contact"
-                className="hover:text-blue-500 dark:hover:text-blue-300"
-              >
+              <Link href="/contact" className="nav-link">
                 Contact
               </Link>
             </div>
           </div>
 
-          {/* Right Section - Search, Theme, Cart, and Profile */}
-          <div className="flex items-center gap-4">
-            <SearchBar />
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Search products..."
+                className="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700"
+              />
+            </div>
+
             <button
               onClick={toggleTheme}
-              className="p-2 text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-              aria-label={`Switch to ${
-                theme === "light" ? "dark" : "light"
-              } mode`}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label="Toggle theme"
             >
-              {theme === "light" ? "🌑" : "☀️"}
+              {theme === 'dark' ? (
+                <FiSun className="text-2xl text-yellow-500" />
+              ) : (
+                <FiMoon className="text-2xl text-gray-700" />
+              )}
             </button>
 
             <button
-              onClick={() => setIsCartOpen(!isCartOpen)}
-              className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-              aria-label="Cart"
+              onClick={() => setShowCart(true)}
+              className="relative text-2xl text-gray-700 dark:text-gray-200"
+              aria-label="Open cart"
             >
-              <span className="text-xl">🛒</span>
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  {totalItems}
+              <FiShoppingCart />
+              {cart.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {cart.length}
                 </span>
               )}
             </button>
 
-            {/* Profile Button */}
             <div className="relative">
               <button
-                onClick={handleProfileClick}
-                className="p-2 text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                aria-label="Profile"
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center space-x-2 focus:outline-none"
               >
-                👤
+                {session ? (
+                  <div className="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center text-white">
+                    {session.user?.name?.[0] || session.user?.email?.[0] || '?'}
+                  </div>
+                ) : (
+                  <FiUser className="text-2xl text-gray-700 dark:text-gray-200" />
+                )}
               </button>
 
-              {/* Profile Dropdown */}
-              {isLoggedIn && isProfileOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg z-20">
-                  <Link
-                    href="/profile"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  >
-                    Profile
-                  </Link>
-                  <Link
-                    href="/orders"
-                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  >
-                    Orders
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  >
-                    Logout
-                  </button>
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-lg shadow-lg py-1 z-50">
+                  {session ? (
+                    <>
+                      <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-600">
+                        <p className="text-sm font-medium">
+                          {session.user?.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {session.user?.email}
+                        </p>
+                      </div>
+                      {session.user?.role === 'ADMIN' && (
+                        <Link href="/admin" className="dropdown-item">
+                          Admin Dashboard
+                        </Link>
+                      )}
+                      {session.user?.role === 'ADMIN' && (
+                        <Link
+                          href="/admin/analytics"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                        >
+                          Analytics Dashboard
+                        </Link>
+                      )}
+                      {session.user?.role === 'VENDOR' && (
+                        <Link href="/vendor" className="dropdown-item">
+                          Vendor Dashboard
+                        </Link>
+                      )}
+                      <Link href="/profile" className="dropdown-item">
+                        Profile Settings
+                      </Link>
+                      <Link href="/profile/avatar" className="dropdown-item">
+                        Change Avatar
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          signOut({ callbackUrl: '/' });
+                        }}
+                        className="dropdown-item text-red-600 dark:text-red-400"
+                      >
+                        Sign out
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="dropdown-item"
+                      onClick={() => setShowProfileMenu(false)}
+                    >
+                      Sign in
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
           </div>
         </div>
-
-        {/* Cart Modal */}
-        {isCartOpen && (
-          <>
-            <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-10"
-              onClick={() => setIsCartOpen(false)} // Close the cart when clicking the overlay
-            />
-            <div className="fixed top-20 right-4 bg-white shadow-lg rounded-lg z-20 w-80 p-4">
-              <h2 className="text-lg font-bold mb-4">Your Cart</h2>
-              {cart.length > 0 ? (
-                <ul>
-                  {cart.map((item) => (
-                    <li key={item.id} className="flex justify-between mb-2">
-                      <span>{item.name}</span>
-                      <span>
-                        {item.quantity} x ${item.price}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>Your cart is empty.</p>
-              )}
-              <button
-                onClick={() => setIsCartOpen(false)}
-                className="mt-4 bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition"
-              >
-                Close
-              </button>
-            </div>
-          </>
-        )}
       </div>
-    </header>
+      <Cart showCart={showCart} onClose={() => setShowCart(false)} />
+    </nav>
   );
 }

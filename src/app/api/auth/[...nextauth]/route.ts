@@ -1,10 +1,10 @@
-import NextAuth, { DefaultSession, NextAuthOptions } from "next-auth"
-import { JWT } from "next-auth/jwt"
+import { DefaultSession, NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { PrismaAdapter } from "@auth/prisma-adapter"
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { Adapter } from "next-auth/adapters"
-import { prisma } from "@/app/lib/prisma"
-import bcrypt from "bcryptjs"
+import { prisma } from "@/app/lib/prisma"  // Updated import
+import { compare } from "bcryptjs"
+import NextAuth from "next-auth"
 
 // Define Role type for better type safety
 type UserRole = 'USER' | 'ADMIN' | 'VENDOR'
@@ -37,34 +37,44 @@ export const authOptions: NextAuthOptions = {
             },
             async authorize(credentials) {
                 if (!credentials?.email || !credentials.password) {
-                    throw new Error("Email and password required")
+                    console.log("[Auth] Missing credentials");
+                    throw new Error("Please provide both email and password");
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { email: credentials.email },
-                    select: {
-                        id: true,
-                        email: true,
-                        name: true,
-                        password: true,
-                        role: true
+                try {
+                    const user = await prisma.user.findUnique({
+                        where: { email: credentials.email },
+                        select: {
+                            id: true,
+                            email: true,
+                            name: true,
+                            password: true,
+                            role: true
+                        }
+                    });
+
+                    if (!user) {
+                        console.log("[Auth] User not found:", credentials.email);
+                        throw new Error("Invalid email or password");
                     }
-                })
 
-                if (!user) {
-                    throw new Error("User not found")
-                }
+                    const isValid = await compare(credentials.password, user.password);
 
-                const isValid = await bcrypt.compare(credentials.password, user.password)
-                if (!isValid) {
-                    throw new Error("Invalid password")
-                }
+                    if (!isValid) {
+                        console.log("[Auth] Invalid password for:", credentials.email);
+                        throw new Error("Invalid email or password");
+                    }
 
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role as UserRole
+                    console.log("[Auth] Login successful for:", credentials.email);
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        role: user.role as UserRole
+                    };
+                } catch (error) {
+                    console.error("[Auth] Error:", error);
+                    throw error;
                 }
             }
         })
@@ -86,12 +96,30 @@ export const authOptions: NextAuthOptions = {
         }
     },
     session: {
-        strategy: "jwt"
+        strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60, // 30 days
     },
     pages: {
-        signIn: '/login'
+        signIn: '/login',
+        error: '/login'
+    },
+    debug: process.env.NODE_ENV === "development",
+    secret: process.env.NEXTAUTH_SECRET,
+    logger: {
+        error(code, ...message) {
+            console.error('[Auth] Error:', code, message);
+        },
+        warn(code, ...message) {
+            console.warn('[Auth] Warning:', code, message);
+        },
+        debug(code, ...message) {
+            if (process.env.NODE_ENV === "development") {
+                console.debug('[Auth] Debug:', code, message);
+            }
+        }
     }
 }
+
 
 const handler = NextAuth(authOptions)
 export { handler as GET, handler as POST }

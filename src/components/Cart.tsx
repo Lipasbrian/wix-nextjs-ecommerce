@@ -1,10 +1,11 @@
-"use client";
+'use client';
 
-import { useCart } from "@/app/Context/CartContext";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { formatCurrency } from "@/utils/formatCurrency";
-import { Product } from "@/app/types";
+import { useCart } from '@/app/Context/CartContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { formatCurrency } from '@/utils/formatCurrency';
+import { Product } from '@/app/types';
+import { trackAddToCart, trackRemoveFromCart } from '@/services/analytics';
 
 // Define the CartItem type
 interface CartItem extends Product {
@@ -30,14 +31,44 @@ export default function Cart({ onClose, showCart }: CartProps) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
+
+  // Enhanced handler for quantity updates that tracks analytics
+  const handleQuantityUpdate = (
+    itemId: string,
+    newQuantity: number,
+    currentQuantity: number
+  ) => {
+    // Track the change in quantity
+    const quantityDelta = newQuantity - currentQuantity;
+
+    if (quantityDelta > 0) {
+      // If increasing quantity, track as add to cart
+      trackAddToCart(itemId, quantityDelta);
+    } else if (quantityDelta < 0 && newQuantity > 0) {
+      // If decreasing quantity but not removing, track as remove from cart
+      trackRemoveFromCart(itemId, Math.abs(quantityDelta));
+    }
+
+    // Call the original updateQuantity function
+    updateQuantity(itemId, newQuantity);
+  };
+
+  // Enhanced handler for removing items that tracks analytics
+  const handleRemoveFromCart = (itemId: string, quantity: number) => {
+    // Track the removal
+    trackRemoveFromCart(itemId, quantity);
+
+    // Call the original removeFromCart function
+    removeFromCart(itemId);
+  };
 
   if (!showCart) return null;
 
@@ -70,7 +101,7 @@ export default function Cart({ onClose, showCart }: CartProps) {
             </p>
             <button
               onClick={() => {
-                router.push("/products");
+                router.push('/products');
                 onClose();
               }}
               className="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
@@ -97,9 +128,10 @@ export default function Cart({ onClose, showCart }: CartProps) {
                     <div className="flex items-center gap-2 mt-2">
                       <button
                         onClick={() =>
-                          updateQuantity(
+                          handleQuantityUpdate(
                             item.id,
-                            Math.max(0, item.quantity - 1)
+                            Math.max(0, item.quantity - 1),
+                            item.quantity
                           )
                         }
                         className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded"
@@ -111,14 +143,20 @@ export default function Cart({ onClose, showCart }: CartProps) {
                       </span>
                       <button
                         onClick={() =>
-                          updateQuantity(item.id, item.quantity + 1)
+                          handleQuantityUpdate(
+                            item.id,
+                            item.quantity + 1,
+                            item.quantity
+                          )
                         }
                         className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded"
                       >
                         +
                       </button>
                       <button
-                        onClick={() => removeFromCart(item.id)}
+                        onClick={() =>
+                          handleRemoveFromCart(item.id, item.quantity)
+                        }
                         className="ml-auto text-red-500 hover:text-red-600"
                         aria-label={`Remove ${item.name} from cart`}
                       >
@@ -142,7 +180,7 @@ export default function Cart({ onClose, showCart }: CartProps) {
               </div>
               <button
                 onClick={() => {
-                  router.push("/checkout");
+                  router.push('/checkout');
                   onClose();
                 }}
                 className="w-full py-3 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"

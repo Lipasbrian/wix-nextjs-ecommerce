@@ -3,180 +3,126 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-
-interface User {
-  id: string;
-  name: string | null;
-  email: string;
-  role: string;
-  createdAt: string;
-}
+import { User } from "@prisma/client";
 
 export default function AdminUsersPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (session?.user?.role !== "ADMIN") {
+    if (
+      status === "unauthenticated" ||
+      (status === "authenticated" && session?.user?.role !== "ADMIN")
+    ) {
       router.push("/dashboard");
     }
-  }, [session, router]);
+  }, [session, router, status]);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/admin/users");
-      if (!response.ok) throw new Error("Failed to fetch users");
-      const data = await response.json();
-      setUsers(data);
-    } catch (error) {
-      toast.error("Error fetching users");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    try {
-      const response = await fetch("/api/admin/users", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, role: newRole }),
-      });
-
-      if (!response.ok) throw new Error("Failed to update user role");
-
-      // Update local state
-      setUsers(
-        users.map((user) =>
-          user.id === userId ? { ...user, role: newRole } : user
-        )
-      );
-
-      toast.success("User role updated");
-    } catch (error) {
-      toast.error("Failed to update user role");
-      console.error(error);
-    }
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    // Confirm before deletion
-    if (
-      !confirm(
-        "Are you sure you want to delete this user? This action cannot be undone."
-      )
-    ) {
-      return;
+    async function fetchUsers() {
+      try {
+        const response = await fetch("/api/admin/users");
+        if (!response.ok) throw new Error("Failed to fetch users");
+        const data = await response.json();
+        setUsers(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load users");
+      } finally {
+        setIsLoading(false);
+      }
     }
 
-    try {
-      const response = await fetch(`/api/admin/users?id=${userId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) throw new Error("Failed to delete user");
-
-      // Update local state by removing the deleted user
-      setUsers(users.filter((user) => user.id !== userId));
-      toast.success("User deleted successfully");
-    } catch (error) {
-      toast.error("Failed to delete user");
-      console.error(error);
+    if (session?.user?.role === "ADMIN") {
+      fetchUsers();
     }
-  };
+  }, [session]);
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.name?.toLowerCase() || "").includes(searchTerm.toLowerCase())
-  );
+  if (status === "loading") {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (session?.user?.role !== "ADMIN") {
+    return null;
+  }
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">User Management</h1>
-
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search users..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-2 border rounded"
-        />
-      </div>
-
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Users List</h2>
+          <button
+            onClick={() => router.push("/admin/users/new")}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-200"
+          >
+            Add New User
+          </button>
+        </div>
+
+        {error && (
+          <div className="text-red-500 mb-4 p-4 bg-red-50 rounded">{error}</div>
+        )}
+
         {isLoading ? (
-          <p>Loading users...</p>
-        ) : (
+          <div className="animate-pulse space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-12 bg-gray-100 rounded"></div>
+            ))}
+          </div>
+        ) : users.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Name
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
-                    Joined
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredUsers.map((user) => (
+              <tbody className="bg-white divide-y divide-gray-200">
+                {users.map((user) => (
                   <tr key={user.id}>
-                    <td className="px-4 py-3 text-sm">{user.name || "N/A"}</td>
-                    <td className="px-4 py-3 text-sm">{user.email}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <select
-                        value={user.role}
-                        onChange={(e) =>
-                          handleRoleChange(user.id, e.target.value)
-                        }
-                        className="border rounded p-1 text-sm"
-                        disabled={user.email === session?.user?.email} // Prevent changing own role
+                    <td className="px-6 py-4 whitespace-nowrap">{user.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {user.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">{user.role}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => router.push(`/admin/users/${user.id}`)}
+                        className="text-blue-600 hover:text-blue-800 mr-3"
                       >
-                        <option value="USER">User</option>
-                        <option value="VENDOR">Vendor</option>
-                        <option value="ADMIN">Admin</option>
-                      </select>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {user.email !== session?.user?.email && (
-                        <button
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          Delete
-                        </button>
-                      )}
+                        Edit
+                      </button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+        ) : (
+          <p className="text-gray-600 dark:text-gray-400">No users found.</p>
         )}
       </div>
     </div>

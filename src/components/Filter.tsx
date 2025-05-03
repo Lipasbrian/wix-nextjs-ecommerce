@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from 'react';
 
 interface FilterState {
   type: string;
@@ -17,23 +17,23 @@ interface FilterProps {
 const Filter: React.FC<FilterProps> = ({ onFilterChange, onSortChange }) => {
   // Local state to manage filter values
   const [filters, setFilters] = useState<FilterState>({
-    type: "",
-    minPrice: "",
-    maxPrice: "",
-    size: "",
-    color: "",
-    category: "",
+    type: '',
+    minPrice: '',
+    maxPrice: '',
+    size: '',
+    color: '',
+    category: '',
   });
 
   // Available options for filters
-  const categories = ["Sneakers", "Formal", "Casual", "Sports"];
-  const sizes = ["36", "37", "38", "39", "40", "41", "42", "43", "44"];
-  const colors = ["Black", "White", "Brown", "Blue", "Red"];
+  const categories = ['Sneakers', 'Formal', 'Casual', 'Sports'];
+  const sizes = ['36', '37', '38', '39', '40', '41', '42', '43', '44'];
+  const colors = ['Black', 'White', 'Brown', 'Blue', 'Red'];
   const sortOptions = [
-    { value: "default", label: "Default" },
-    { value: "price-asc", label: "Price: Low to High" },
-    { value: "price-desc", label: "Price: High to Low" },
-    { value: "name-asc", label: "Name: A to Z" },
+    { value: 'default', label: 'Default' },
+    { value: 'price-asc', label: 'Price: Low to High' },
+    { value: 'price-desc', label: 'Price: High to Low' },
+    { value: 'name-asc', label: 'Name: A to Z' },
   ];
 
   // Handle individual filter changes
@@ -72,7 +72,7 @@ const Filter: React.FC<FilterProps> = ({ onFilterChange, onSortChange }) => {
         <select
           className="w-full p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           value={filters.category}
-          onChange={(e) => handleFilterChange("category", e.target.value)}
+          onChange={(e) => handleFilterChange('category', e.target.value)}
         >
           <option value="">All Categories</option>
           {categories.map((category) => (
@@ -94,14 +94,14 @@ const Filter: React.FC<FilterProps> = ({ onFilterChange, onSortChange }) => {
             placeholder="Min"
             className="w-1/2 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             value={filters.minPrice}
-            onChange={(e) => handleFilterChange("minPrice", e.target.value)}
+            onChange={(e) => handleFilterChange('minPrice', e.target.value)}
           />
           <input
             type="number"
             placeholder="Max"
             className="w-1/2 p-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             value={filters.maxPrice}
-            onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
+            onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
           />
         </div>
       </div>
@@ -117,10 +117,10 @@ const Filter: React.FC<FilterProps> = ({ onFilterChange, onSortChange }) => {
               key={size}
               className={`px-3 py-1 rounded-md text-sm ${
                 filters.size === size
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
               }`}
-              onClick={() => handleFilterChange("size", size)}
+              onClick={() => handleFilterChange('size', size)}
             >
               {size}
             </button>
@@ -139,10 +139,10 @@ const Filter: React.FC<FilterProps> = ({ onFilterChange, onSortChange }) => {
               key={color}
               className={`px-3 py-1 rounded-md text-sm ${
                 filters.color === color
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
               }`}
-              onClick={() => handleFilterChange("color", color)}
+              onClick={() => handleFilterChange('color', color)}
             >
               {color}
             </button>
@@ -155,16 +155,16 @@ const Filter: React.FC<FilterProps> = ({ onFilterChange, onSortChange }) => {
         className="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
         onClick={() => {
           const resetFilters = {
-            type: "",
-            minPrice: "",
-            maxPrice: "",
-            size: "",
-            color: "",
-            category: "",
+            type: '',
+            minPrice: '',
+            maxPrice: '',
+            size: '',
+            color: '',
+            category: '',
           };
           setFilters(resetFilters);
           onFilterChange(resetFilters);
-          onSortChange("default");
+          onSortChange('default');
         }}
       >
         Reset Filters

@@ -1,7 +1,7 @@
 // app/vendor/training/page.tsx
-"use client";
-import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+'use client';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface TrainingModule {
   id: number;
@@ -16,16 +16,16 @@ export default function VendorTraining() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
+    const token = localStorage.getItem('userToken');
     if (!token) {
-      router.push("/login");
+      router.push('/login');
     } else {
       setIsLoading(false);
     }
   }, [router]);
 
   useEffect(() => {
-    const savedProgress = localStorage.getItem("trainingProgress");
+    const savedProgress = localStorage.getItem('trainingProgress');
     if (savedProgress) {
       setModules(JSON.parse(savedProgress));
     }
@@ -34,30 +34,30 @@ export default function VendorTraining() {
   const [modules, setModules] = useState<TrainingModule[]>([
     {
       id: 1,
-      title: "Creating Effective Ads",
-      duration: "15 min",
+      title: 'Creating Effective Ads',
+      duration: '15 min',
       completed: false,
       content: [
-        "Use high-quality images",
-        "Write clear call-to-actions",
-        "Highlight unique selling points",
+        'Use high-quality images',
+        'Write clear call-to-actions',
+        'Highlight unique selling points',
       ],
     },
     {
       id: 2,
-      title: "Targeting Your Audience",
-      duration: "10 min",
+      title: 'Targeting Your Audience',
+      duration: '10 min',
       completed: false,
       content: [
-        "Define your ideal customer",
-        "Select appropriate locations",
-        "Choose optimal times",
+        'Define your ideal customer',
+        'Select appropriate locations',
+        'Choose optimal times',
       ],
     },
   ]);
 
   const [activeModule, setActiveModule] = useState<TrainingModule | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
 
   //Add progress calculation
   const progress = Math.round(
@@ -72,7 +72,7 @@ export default function VendorTraining() {
       m.id === id ? { ...m, completed: true } : m
     );
     setModules(updatedModules);
-    localStorage.setItem("trainingProgress", JSON.stringify(updatedModules));
+    localStorage.setItem('trainingProgress', JSON.stringify(updatedModules));
   };
 
   if (isLoading) {
@@ -124,7 +124,7 @@ export default function VendorTraining() {
               <div
                 key={module.id}
                 className={`p-4 border rounded-lg cursor-pointer ${
-                  module.completed ? "bg-green-50" : "hover:bg-gray-50"
+                  module.completed ? 'bg-green-50' : 'hover:bg-gray-50'
                 }`}
                 onClick={() => setActiveModule(module)}
               >

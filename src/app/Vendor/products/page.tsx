@@ -1,27 +1,30 @@
-"use client";
+'use client';
 
-import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import React from "react";
+import { useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import React from 'react';
 
 interface Product {
   id: string;
   name: string;
   description: string;
   price: number;
+  active: boolean; // Add active property
 }
 
 const emptyProduct = {
-  id: "",
-  name: "",
-  description: "",
+  id: '',
+  name: '',
+  description: '',
   price: 0,
+  active: true, // Add default value
 };
 
 export default function VendorProductsPage() {
-  const { data: session } = useSession();
+  const { data: _session } = useSession(); // Prefix unused session
   const [products, setProducts] = useState<Product[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
@@ -29,12 +32,16 @@ export default function VendorProductsPage() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("/api/vendor/products");
-      if (!response.ok) throw new Error("Failed to fetch products");
+      const response = await fetch('/api/vendor/products');
+      if (!response.ok) throw new Error('Failed to fetch products');
       const data = await response.json();
       setProducts(data);
-    } catch (error) {
-      toast.error("Error fetching products");
+    } catch (err) {
+      // Rename error to err to use it
+      const message =
+        err instanceof Error ? err.message : 'Error fetching products';
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -49,40 +56,73 @@ export default function VendorProductsPage() {
     if (!currentProduct) return;
 
     try {
-      const response = await fetch("/api/vendor/products", {
-        method: isEditing ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/vendor/products', {
+        method: isEditing ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(currentProduct),
       });
 
-      if (!response.ok) throw new Error("Failed to save product");
+      if (!response.ok) throw new Error('Failed to save product');
 
       await fetchProducts();
       setIsEditing(false);
       setCurrentProduct(null);
       setShowForm(false);
       toast.success(
-        `Product ${isEditing ? "updated" : "created"} successfully`
+        `Product ${isEditing ? 'updated' : 'created'} successfully`
       );
-    } catch (error) {
-      toast.error(`Error ${isEditing ? "updating" : "creating"} product`);
+    } catch (err) {
+      // Rename error to err to use it
+      const message =
+        err instanceof Error
+          ? err.message
+          : `Error ${isEditing ? 'updating' : 'creating'} product`;
+      setErrorMessage(message);
+      toast.error(message);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
-
+  const handleDeleteProduct = async (id: string) => {
     try {
-      const response = await fetch(`/api/vendor/products?id=${id}`, {
-        method: "DELETE",
+      const response = await fetch(`/api/vendor/products/${id}`, {
+        method: 'DELETE',
       });
 
-      if (!response.ok) throw new Error("Failed to delete product");
+      if (!response.ok) {
+        throw new Error('Failed to delete product');
+      }
 
-      setProducts(products.filter((product) => product.id !== id));
-      toast.success("Product deleted successfully");
-    } catch (error) {
-      toast.error("Error deleting product");
+      setProducts(products.filter((p) => p.id !== id));
+      toast.success('Product deleted successfully');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to delete product';
+      setErrorMessage(message);
+      toast.error(message);
+    }
+  };
+
+  const handleProductUpdate = async (id: string, data: Partial<Product>) => {
+    try {
+      const response = await fetch(`/api/vendor/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update product');
+      }
+
+      // Refresh products list
+      const updatedProduct = await response.json();
+      setProducts(products.map((p) => (p.id === id ? updatedProduct : p)));
+      toast.success('Product updated successfully');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to update product';
+      setErrorMessage(message);
+      toast.error(message);
     }
   };
 
@@ -119,7 +159,7 @@ export default function VendorProductsPage() {
       {showForm && (
         <div className="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">
-            {isEditing ? "Edit Product" : "Add New Product"}
+            {isEditing ? 'Edit Product' : 'Add New Product'}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Same form fields as admin product page */}
@@ -135,7 +175,7 @@ export default function VendorProductsPage() {
                 type="submit"
                 className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg"
               >
-                {isEditing ? "Update Product" : "Add Product"}
+                {isEditing ? 'Update Product' : 'Add Product'}
               </button>
             </div>
           </form>
@@ -159,6 +199,9 @@ export default function VendorProductsPage() {
                 <div>
                   <h3 className="font-semibold">{product.name}</h3>
                   <p className="text-sm text-gray-600">${product.price}</p>
+                  <p className="text-xs text-gray-500">
+                    Status: {product.active ? 'Active' : 'Inactive'}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -168,8 +211,18 @@ export default function VendorProductsPage() {
                     Edit
                   </button>
                   <button
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded"
+                    onClick={() =>
+                      handleProductUpdate(product.id, {
+                        active: !product.active,
+                      })
+                    }
+                  >
+                    {product.active ? 'Deactivate' : 'Activate'}
+                  </button>
+                  <button
                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                    onClick={() => handleDelete(product.id)}
+                    onClick={() => handleDeleteProduct(product.id)}
                   >
                     Delete
                   </button>
@@ -179,6 +232,7 @@ export default function VendorProductsPage() {
           </div>
         )}
       </div>
+      {errorMessage && <div className="text-red-500 mb-4">{errorMessage}</div>}
     </div>
   );
 }

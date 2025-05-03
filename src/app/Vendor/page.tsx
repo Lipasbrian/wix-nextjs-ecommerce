@@ -1,9 +1,29 @@
 // app/vendor/analytics/page.tsx
-"use client";
-import { useVendorAnalytics } from "@/hooks/useAnalytics";
+'use client';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { useSession } from 'next-auth/react';
+import { redirect } from 'next/navigation';
 
-export default function AnalyticsDashboard() {
-  const { data, loading, error } = useVendorAnalytics();
+export default function VendorPage() {
+  const { data: session, status } = useSession();
+  const vendorId = session?.user?.id;
+
+  // Handle unauthenticated users
+  if (status === 'unauthenticated') {
+    redirect('/login');
+  }
+
+  // Don't call hook if vendorId is undefined
+  const { data, loading, error } = useAnalytics(vendorId || '');
+
+  if (!vendorId) {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-6">Advertisement Analytics</h1>
+        <p className="text-red-500">Error: User ID not found</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -18,7 +38,7 @@ export default function AnalyticsDashboard() {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-6">Advertisement Analytics</h1>
-        <p className="text-red-500">Error: {error.message}</p>
+        <p className="text-red-500">Error: {error.error}</p>
       </div>
     );
   }

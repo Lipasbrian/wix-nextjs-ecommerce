@@ -74,3 +74,11 @@ body {
 .dark {
   color-scheme: dark;
 }
+
+.nav-link {
+  @apply text-gray-700 dark:text-gray-200 hover:text-purple-600 dark:hover:text-purple-400;
+}
+
+.dropdown-item {
+  @apply block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600;
+}

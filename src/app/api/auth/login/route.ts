@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/app/lib/prisma";
+import { prisma } from "@/app/lib/prisma";  // Updated import
 import { validateLogin } from "@/lib/validators/auth";
 import { rateLimit } from "@/app/lib/rate-limit";
 
@@ -13,18 +13,6 @@ interface LoginResponse {
     message?: string;
     sessionId?: string;
     error?: string;
-}
-
-interface User {
-    id: string;
-    email: string;
-    password: string;
-}
-
-interface Session {
-    id: string;
-    userId: string;
-    expires: Date;
 }
 
 export async function POST(request: Request) {

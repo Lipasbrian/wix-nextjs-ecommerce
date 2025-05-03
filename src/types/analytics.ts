@@ -2,19 +2,15 @@
  * Represents analytics data for a vendor
  */
 export interface VendorAnalytics {
-  id?: string;
-  /** Unique identifier for the vendor */
   vendorId: string;
-  date?: Date;
-  /** Number of times vendor's content was viewed */
   impressions: number;
-  /** Number of clicks on vendor's content */
   clicks: number;
-  /** Click-through rate (clicks/impressions) */
   ctr: number;
-  revenue?: number;
-  /** Last time analytics were updated */
-  lastUpdated?: Date;
+  revenue: number;
+  lastUpdated: Date;
+  daily: AnalyticsData;
+  weekly: AnalyticsData;
+  monthly: AnalyticsData;
 }
 
 export interface AnalyticsError {
@@ -34,3 +30,27 @@ export interface AnalyticsResponse {
   forecast: AnalyticsForecast;
   insights: string;
 }
+
+export interface AnalyticsData {
+  impressions: number;
+  clicks: number;
+  revenue: number;
+  ctr: number;
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  error?: string;
+}
+
+// Replace any with proper types
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+// Use instead of any
+export type ApiData = Record<string, JsonValue>;

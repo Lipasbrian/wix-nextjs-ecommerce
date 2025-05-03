@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/app/lib/prisma";
-import { validateRegistration } from "@/app/lib/validators";
 
 export async function POST(req: Request) {
   try {
@@ -24,17 +23,14 @@ export async function POST(req: Request) {
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 12);
-    const user = await prisma.user.create({
+    const _user = await prisma.user.create({
       data: {
         ...data,
         password: hashedPassword,
       },
     });
 
-    return NextResponse.json(
-      { message: "Registration successful" },
-      { status: 201 }
-    );
+    return new Response(JSON.stringify({ message: 'User created successfully' }));
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(

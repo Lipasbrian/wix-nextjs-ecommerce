@@ -1,38 +1,45 @@
-// hooks/useAnalytics.ts
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
+import type { VendorAnalytics, AnalyticsError } from '@/types/analytics';
 
-interface AnalyticsData {
-  timeSeriesData: any[] | undefined;
-  impressions: number;
-  clicks: number;
-  ctr: number;
+interface AnalyticsState {
+  data: VendorAnalytics | null;
+  error: AnalyticsError | null;
+  loading: boolean;
 }
 
-export function useVendorAnalytics() {
-  const [data, setData] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+export function useAnalytics(vendorId: string): AnalyticsState {
+  const [state, setState] = useState<AnalyticsState>({
+    data: null,
+    error: null,
+    loading: true
+  });
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAnalytics = async () => {
       try {
-        const response = await fetch("/api/vendor/analytics");
+        const response = await fetch(`/api/analytics?vendorId=${vendorId}`);
+        const data = await response.json();
+
         if (!response.ok) {
-          throw new Error("Failed to fetch analytics");
+          setState({ data: null, error: data as AnalyticsError, loading: false });
+          return;
         }
-        const result = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error("An unknown error occurred")
-        );
-      } finally {
-        setLoading(false);
+
+        setState({ data: data as VendorAnalytics, error: null, loading: false });
+      } catch (err) { // Changed from error to err
+        console.error('Analytics error:', err);
+        setState({
+          data: null,
+          error: {
+            error: err instanceof Error ? err.message : 'Failed to fetch analytics'
+          },
+          loading: false
+        });
       }
     };
 
-    fetchData();
-  }, []);
+    fetchAnalytics();
+  }, [vendorId]);
 
-  return { data, loading, error };
+  return state;
 }

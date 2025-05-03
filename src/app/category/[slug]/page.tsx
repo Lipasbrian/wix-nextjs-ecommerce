@@ -39,7 +39,7 @@ export default async function CategoryPage({
   const pageSize = 6; // Products per page
 
   // Fetch all products for this category
-  let allProducts = await getProductsByCategory(slug);
+  const allProducts = await getProductsByCategory(slug);
 
   // If no products are found, show the 404 page
   if (!allProducts || allProducts.length === 0) {
@@ -47,7 +47,7 @@ export default async function CategoryPage({
   }
 
   // Apply sorting
-  let sortedProducts = [...allProducts];
+  const sortedProducts = [...allProducts];
   if (sortBy !== "default") {
     sortedProducts.sort((a, b) => {
       switch (sortBy) {

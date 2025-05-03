@@ -1,31 +1,35 @@
-"use client";
+'use client';
 
-import { useSession } from "next-auth/react";
-import { useState } from "react";
-import toast from "react-hot-toast";
+import { useSession } from 'next-auth/react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Camera } from 'lucide-react';
 
 export default function ProfilePage() {
   const { data: session, update: updateSession } = useSession();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [userData, setUserData] = useState({
-    name: session?.user?.name || "",
-    email: session?.user?.email || "",
+    name: session?.user?.name || '',
+    email: session?.user?.email || '',
   });
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update profile");
+        throw new Error('Failed to update profile');
       }
 
       const updatedUser = await response.json();
@@ -40,9 +44,14 @@ export default function ProfilePage() {
       });
 
       setIsEditing(false);
-      toast.success("Profile updated successfully");
+      toast.success('Profile updated successfully');
     } catch (error) {
-      toast.error("Failed to update profile");
+      toast.error('Failed to update profile');
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unknown error occurred');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -52,6 +61,43 @@ export default function ProfilePage() {
     <div className="container mx-auto p-6">
       <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h1 className="text-2xl font-bold mb-6">Profile Settings</h1>
+        {error && (
+          <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+            {error}
+          </div>
+        )}
+        <div className="flex items-center mb-6">
+          <div className="relative">
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+              {session?.user?.image ? (
+                <Image
+                  src={session.user.image}
+                  alt="Profile picture"
+                  width={96}
+                  height={96}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-3xl text-gray-400">
+                  {session?.user?.name?.[0] || '?'}
+                </div>
+              )}
+            </div>
+            <Link
+              href="/profile/avatar"
+              className="absolute bottom-0 right-0 bg-blue-600 text-white p-1 rounded-full hover:bg-blue-700 transition-colors"
+              aria-label="Change profile picture"
+            >
+              <Camera size={16} />
+            </Link>
+          </div>
+          <div className="ml-4">
+            <h2 className="text-xl font-semibold">{session?.user?.name}</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {session?.user?.email}
+            </p>
+          </div>
+        </div>
         {isEditing ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -90,7 +136,7 @@ export default function ProfilePage() {
                 disabled={isLoading}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
               >
-                {isLoading ? "Saving..." : "Save Changes"}
+                {isLoading ? 'Saving...' : 'Save Changes'}
               </button>
               <button
                 type="button"
@@ -106,7 +152,7 @@ export default function ProfilePage() {
             <div>
               <label className="block text-sm font-medium mb-1">Name</label>
               <p className="text-gray-600 dark:text-gray-300">
-                {session?.user?.name || "Not set"}
+                {session?.user?.name || 'Not set'}
               </p>
             </div>
             <div>

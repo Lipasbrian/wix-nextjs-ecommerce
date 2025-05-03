@@ -1,58 +1,45 @@
-"use client";
+'use client';
 
-import { useState, FormEvent, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { validateEmail, validatePassword } from "@/app/lib/validators";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
   const { status } = useSession();
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    rememberMe: false,
-  });
-  const [error, setError] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated") {
-      router.push("/dashboard");
+    if (status === 'authenticated') {
+      router.push('/dashboard');
     }
   }, [status, router]);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
+  const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     setIsLoading(true);
-
-    // Validate inputs
-    const emailValidation = validateEmail(formData.email);
-    if (!emailValidation.valid) {
-      setError(emailValidation.message || "Invalid email");
-      setIsLoading(false);
-      return;
-    }
+    setErrorMessage('');
 
     try {
-      const result = await signIn("credentials", {
-        email: formData.email,
-        password: formData.password,
+      const result = await signIn('credentials', {
+        email: formData.get('email'),
+        password: formData.get('password'),
         redirect: false,
       });
 
       if (result?.error) {
-        setError(result.error);
+        setErrorMessage(result.error);
         return;
       }
 
-      router.push("/dashboard");
-      router.refresh();
+      router.push('/dashboard');
     } catch (err) {
-      setError("An unexpected error occurred");
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setErrorMessage(message);
     } finally {
       setIsLoading(false);
     }
@@ -64,13 +51,13 @@ export default function LoginPage() {
         Welcome back!
       </h1>
 
-      {error && (
+      {errorMessage && (
         <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
+          {errorMessage}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleLoginSubmit} className="space-y-6">
         <div>
           <label
             htmlFor="email"
@@ -81,10 +68,8 @@ export default function LoginPage() {
           <input
             type="email"
             id="email"
-            value={formData.email}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, email: e.target.value }))
-            }
+            name="email"
+            autoComplete="username"
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
             placeholder="your@email.com"
             required
@@ -101,10 +86,8 @@ export default function LoginPage() {
           <input
             type="password"
             id="password"
-            value={formData.password}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, password: e.target.value }))
-            }
+            name="password"
+            autoComplete="current-password"
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
             placeholder="••••••••"
             required
@@ -117,13 +100,6 @@ export default function LoginPage() {
               id="remember-me"
               name="remember-me"
               type="checkbox"
-              checked={formData.rememberMe}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  rememberMe: e.target.checked,
-                }))
-              }
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded dark:bg-gray-800 dark:border-gray-600"
             />
             <label
@@ -149,13 +125,13 @@ export default function LoginPage() {
           disabled={isLoading}
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600 disabled:opacity-50"
         >
-          {isLoading ? "Signing in..." : "Sign in"}
+          {isLoading ? 'Signing in...' : 'Sign in'}
         </button>
       </form>
 
       <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
         <p>
-          Don&apos;t have an account?{" "}
+          Don&apos;t have an account?{' '}
           <Link
             href="/register"
             className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"

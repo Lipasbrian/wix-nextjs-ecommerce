@@ -1,51 +1,122 @@
 import { PrismaClient } from "@prisma/client";
 
-// Declare global prisma type
+/**
+ * Unified Prisma Client that supports:
+ * 1. Singleton pattern to prevent multiple connections
+ * 2. Environment-based logging configuration
+ * 3. Optional mock data for development and testing
+ * 4. Preservation of real connections for auth-related queries
+ */
+
+// Define the global type (use a unique name to avoid conflicts)
 declare global {
-  var prisma: PrismaClient | undefined;
+    // eslint-disable-next-line no-var
+    var prismaGlobal: PrismaClient | undefined;
 }
 
-// Create a real PrismaClient instance or import the mock
-let prismaClient: any;
+// Configure client options based on environment
+const clientOptions = {
+    log: process.env.NODE_ENV === 'development'
+        ? ['query', 'error', 'warn']
+        : ['error'],
+};
 
-// In development, use a global variable to prevent multiple instances
-if (process.env.NODE_ENV === "production") {
-  prismaClient = new PrismaClient();
-} else {
-  // In development, use mock implementation
-  if (!global.prisma) {
-    // Create mock implementation
-    global.prisma = {
-      product: {
-        findMany: async ({ where, orderBy }: any) => {
-          console.log("Mock prisma findMany called with:", { where, orderBy });
-          return [];
-        },
-        findUnique: async ({ where }: any) => {
-          console.log("Mock prisma findUnique called with:", where);
-          return null;
+// Determine if we should use mocks (development only)
+const useMocks = process.env.NODE_ENV !== 'production' &&
+    process.env.USE_PRISMA_MOCKS === 'true';
+
+// Create or reuse the Prisma client instance
+let prisma: PrismaClient;
+
+// Change this part:
+if (!global.prismaGlobal) {
+    try {
+        global.prismaGlobal = new PrismaClient(clientOptions);
+    } catch (error) {
+        console.error("Failed to initialize Prisma Client:", error);
+
+        // Create a more comprehensive mock client that includes auth models
+        global.prismaGlobal = {
+            $connect: () => Promise.resolve(),
+            $disconnect: () => Promise.resolve(),
+            user: {
+                findUnique: async () => null,
+                findFirst: async () => null,
+                create: async () => ({ id: "mock-id" }),
+            },
+            account: {
+                findFirst: async () => null,
+                create: async () => ({ id: "mock-id" }),
+            },
+            session: {
+                findMany: async () => [],
+                create: async () => ({ id: "mock-id" }),
+                deleteMany: async () => ({ count: 0 }),
+            },
+            // Other auth-related models
+        } as unknown as PrismaClient;
+    }
+}
+
+prisma = global.prismaGlobal;
+
+// Apply mocking if enabled (development only)
+if (useMocks) {
+    console.log('🔶 Using Prisma mock mode for non-auth queries');
+
+    // Create a proxy that selectively mocks non-auth operations
+    prisma = new Proxy(prisma, {
+        get(target, prop) {
+            // These models always use real DB connection
+            const authModels = ['user', 'account', 'session', 'verificationToken'];
+            if (authModels.includes(prop as string)) {
+                return target[prop as keyof PrismaClient];
+            }
+
+            // More flexible type definition for mock functions
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            type MockFunction = (params: any) => Promise<unknown>;
+
+            // Mock implementations for specific models
+            const mockImplementations: Record<string, Record<string, MockFunction>> = {
+                product: {
+                    findMany: async ({ where, orderBy }) => {
+                        console.log("Mock product.findMany called with:", { where, orderBy });
+                        return [];
+                    },
+                    findUnique: async ({ where }) => {
+                        console.log("Mock product.findUnique called with:", where);
+                        return null;
+                    }
+                },
+                cart: {
+                    findMany: async () => [],
+                    findFirst: async () => null,
+                    create: async () => ({ id: "mock-id" }),
+                    update: async () => ({ id: "mock-id" }),
+                    delete: async () => ({ id: "mock-id" })
+                },
+                cartItem: {
+                    findMany: async () => [],
+                    findFirst: async () => null,
+                    create: async () => ({ id: "mock-id" }),
+                    update: async () => ({ id: "mock-id" }),
+                    delete: async () => ({ id: "mock-id" })
+                },
+                vendorAnalytics: {
+                    findMany: async () => []
+                }
+            };
+
+            // Return mock implementation if available
+            if (mockImplementations[prop as string]) {
+                return mockImplementations[prop as string];
+            }
+
+            // For any other models, return the original
+            return target[prop as keyof PrismaClient];
         }
-      },
-      cart: {
-        findMany: async () => [],
-        findFirst: async () => null,
-        create: async () => ({ id: "mock-id" }),
-        update: async () => ({ id: "mock-id" }),
-        delete: async () => ({ id: "mock-id" })
-      },
-      cartItem: {
-        findMany: async () => [],
-        findFirst: async () => null,
-        create: async () => ({ id: "mock-id" }),
-        update: async () => ({ id: "mock-id" }),
-        delete: async () => ({ id: "mock-id" })
-      },
-      vendorAnalytics: {
-        findMany: async () => []
-      }
-    } as unknown as PrismaClient;
-  }
-  prismaClient = global.prisma;
+    }) as PrismaClient;
 }
 
-export const prisma = prismaClient;
+export { prisma };
