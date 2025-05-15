@@ -25,11 +25,19 @@ export default function LoginPage() {
     setErrorMessage('');
 
     try {
+      console.log('Attempting login with:', {
+        email: formData.get('email'),
+        hasPassword: !!formData.get('password'),
+      });
+
       const result = await signIn('credentials', {
         email: formData.get('email'),
         password: formData.get('password'),
         redirect: false,
+        callbackUrl: '/dashboard',
       });
+
+      console.log('Auth result:', result);
 
       if (result?.error) {
         setErrorMessage(result.error);
@@ -38,6 +46,7 @@ export default function LoginPage() {
 
       router.push('/dashboard');
     } catch (err) {
+      console.error('Login error:', err);
       const message = err instanceof Error ? err.message : 'Login failed';
       setErrorMessage(message);
     } finally {

@@ -3,9 +3,14 @@
 /**
  * Track ad impressions when they're viewed
  */
-export async function trackAdImpression(adId: string, position: number, adTitle: string) {
+export const trackAdImpression = async (
+    adId: string,
+    position: number,
+    adTitle: string,
+    vendorId: string = "system"
+) => {
     try {
-        await fetch('/api/analytics/track', {
+        const response = await fetch('/api/analytics/track', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -15,20 +20,30 @@ export async function trackAdImpression(adId: string, position: number, adTitle:
                 adId,
                 position,
                 adTitle,
+                vendorId,
                 timestamp: new Date().toISOString(),
             }),
         });
+
+        if (!response.ok) {
+            console.error('Failed to track ad impression');
+        }
     } catch (error) {
-        console.error('Failed to track ad impression:', error);
+        console.error('Error tracking ad impression:', error);
     }
-}
+};
 
 /**
  * Track ad clicks when users interact with ads
  */
-export async function trackAdClick(adId: string, position: number, adTitle: string) {
+export const trackAdClick = async (
+    adId: string,
+    position: number,
+    adTitle: string,
+    vendorId: string = "system"
+) => {
     try {
-        await fetch('/api/analytics/track', {
+        const response = await fetch('/api/analytics/track', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -38,13 +53,18 @@ export async function trackAdClick(adId: string, position: number, adTitle: stri
                 adId,
                 position,
                 adTitle,
+                vendorId,
                 timestamp: new Date().toISOString(),
             }),
         });
+
+        if (!response.ok) {
+            console.error('Failed to track ad click');
+        }
     } catch (error) {
-        console.error('Failed to track ad click:', error);
+        console.error('Error tracking ad click:', error);
     }
-}
+};
 
 /**
  * Track product views

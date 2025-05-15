@@ -4,6 +4,35 @@ import { VendorAnalytics, AnalyticsError } from "@/types/analytics";
 import { getServerSession } from "next-auth";  // Changed from @auth/nextjs
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
+// Add this at the top of the file, below your imports
+const RATE_LIMIT_DURATION = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_MINUTE = 10;
+const ratelimits = new Map();
+
+function rateLimit(identifier: string) {
+  const now = Date.now();
+
+  const userRateLimit = ratelimits.get(identifier) || {
+    count: 0,
+    resetAt: now + RATE_LIMIT_DURATION
+  };
+
+  // Reset if window has passed
+  if (now > userRateLimit.resetAt) {
+    userRateLimit.count = 0;
+    userRateLimit.resetAt = now + RATE_LIMIT_DURATION;
+  }
+
+  userRateLimit.count += 1;
+  ratelimits.set(identifier, userRateLimit);
+
+  return {
+    isLimited: userRateLimit.count > MAX_REQUESTS_PER_MINUTE,
+    remaining: Math.max(0, MAX_REQUESTS_PER_MINUTE - userRateLimit.count),
+    resetAt: userRateLimit.resetAt
+  };
+}
+
 /**
  * GET /api/analytics
  * Fetches analytics data for a specific vendor
@@ -82,10 +111,10 @@ async function getAggregatedData(vendorId: string, timeframe: 'day' | 'week' | '
 
   const sum = aggregated._sum;
   return {
-    impressions: sum.impressions || 0,
-    clicks: sum.clicks || 0,
-    revenue: sum.revenue || 0,
-    ctr: sum.clicks && sum.impressions ? (sum.clicks / sum.impressions) * 100 : 0
+    impressions: sum?.impressions || 0,
+    clicks: sum?.clicks || 0,
+    revenue: sum?.revenue || 0,
+    ctr: sum?.clicks && sum?.impressions ? (sum.clicks / sum.impressions) * 100 : 0
   };
 }
 
@@ -185,34 +214,5 @@ export async function POST(request: Request) {
     console.error("Error generating AI insights:", error);
     return new NextResponse("Error generating insights", { status: 500 });
   }
-}
-
-// Add this improved rate limit implementation
-const RATE_LIMIT_DURATION = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_MINUTE = 10;
-const ratelimits = new Map();
-
-function rateLimit(identifier: string) {
-  const now = Date.now();
-
-  const userRateLimit = ratelimits.get(identifier) || {
-    count: 0,
-    resetAt: now + RATE_LIMIT_DURATION
-  };
-
-  // Reset if window has passed
-  if (now > userRateLimit.resetAt) {
-    userRateLimit.count = 0;
-    userRateLimit.resetAt = now + RATE_LIMIT_DURATION;
-  }
-
-  userRateLimit.count += 1;
-  ratelimits.set(identifier, userRateLimit);
-
-  return {
-    isLimited: userRateLimit.count > MAX_REQUESTS_PER_MINUTE,
-    remaining: Math.max(0, MAX_REQUESTS_PER_MINUTE - userRateLimit.count),
-    resetAt: userRateLimit.resetAt
-  };
 }
 

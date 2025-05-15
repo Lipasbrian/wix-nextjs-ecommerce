@@ -7,6 +7,7 @@ const mockProducts: Product[] = [
         name: "Premium Laptop",
         description: "High-performance laptop with the latest specs",
         price: 1299.99,
+        stock: 10, // Add stock property
         imageUrl: "https://images.pexels.com/photos/2047905/pexels-photo-2047905.jpeg",
         images: { primary: "https://images.pexels.com/photos/2047905/pexels-photo-2047905.jpeg" },
         category: "Laptops",
@@ -18,6 +19,7 @@ const mockProducts: Product[] = [
         name: "Budget Laptop",
         description: "Affordable laptop for everyday tasks",
         price: 699.99,
+        stock: 15, // Add stock property
         imageUrl: "https://images.pexels.com/photos/2047905/pexels-photo-2047905.jpeg",
         images: { primary: "https://images.pexels.com/photos/2047905/pexels-photo-2047905.jpeg" },
         category: "Laptops",
@@ -29,6 +31,7 @@ const mockProducts: Product[] = [
         name: "Premium Smartphone",
         description: "Latest smartphone with stunning camera",
         price: 999.99,
+        stock: 8, // Add stock property
         imageUrl: "https://images.pexels.com/photos/1092671/pexels-photo-1092671.jpeg",
         images: { primary: "https://images.pexels.com/photos/1092671/pexels-photo-1092671.jpeg" },
         category: "Smartphones",
@@ -40,6 +43,7 @@ const mockProducts: Product[] = [
         name: "Budget Smartphone",
         description: "Affordable smartphone with great features",
         price: 399.99,
+        stock: 20, // Add stock property
         imageUrl: "https://images.pexels.com/photos/1092671/pexels-photo-1092671.jpeg",
         images: { primary: "https://images.pexels.com/photos/1092671/pexels-photo-1092671.jpeg" },
         category: "Smartphones",

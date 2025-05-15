@@ -1,9 +1,9 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { trackAdImpression, trackAdClick } from '@/services/analytics';
+import { trackAdClick } from '@/services/analytics';
 
 interface AdType {
   title: string;
@@ -11,6 +11,7 @@ interface AdType {
   image: string | null;
   targetLocation: string;
   budget: number;
+  vendorId?: string;
 }
 
 interface AdPreviewProps {
@@ -27,6 +28,38 @@ export default function AdPreview({
 
   const currentAd = ad[currentIndex];
 
+  // Use useCallback to memoize the trackAdImpression function
+  const trackAdImpression = useCallback(
+    async (adId: string, position: number, title: string) => {
+      // Now we can access currentAd directly
+      const vendorId = currentAd?.vendorId || 'system';
+
+      try {
+        const response = await fetch('/api/analytics/track', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            eventType: 'adImpression',
+            adId,
+            position,
+            adTitle: title,
+            vendorId,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+
+        if (!response.ok) {
+          console.error('Failed to track ad impression');
+        }
+      } catch (error) {
+        console.error('Error tracking ad impression:', error);
+      }
+    },
+    [currentAd]
+  );
+
   // Track ad impressions when ad changes
   useEffect(() => {
     if (currentAd) {
@@ -36,7 +69,7 @@ export default function AdPreview({
       // Track the impression
       trackAdImpression(adId, currentIndex, currentAd.title);
     }
-  }, [currentIndex, currentAd]);
+  }, [currentIndex, currentAd, trackAdImpression]);
 
   // Auto advance carousel
   useEffect(() => {

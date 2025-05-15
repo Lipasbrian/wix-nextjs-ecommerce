@@ -6,7 +6,7 @@ import { prisma } from "@/app/lib/prisma"  // Use the real connection for auth
 import { compare } from "bcryptjs"
 
 // Define Role type for better type safety
-type UserRole = 'USER' | 'ADMIN' | 'VENDOR'
+export type UserRole = 'USER' | 'ADMIN' | 'VENDOR'
 
 // Update type declarations
 declare module "next-auth" {
@@ -37,7 +37,8 @@ export const authOptions: NextAuthOptions = {
             async authorize(credentials): Promise<User | null> {
                 try {
                     if (!credentials?.email || !credentials?.password) {
-                        throw new Error("Missing required fields");
+                        console.log("[Auth] Missing credentials");
+                        return null;
                     }
 
                     const user = await prisma.user.findUnique({
@@ -52,14 +53,17 @@ export const authOptions: NextAuthOptions = {
                     });
 
                     if (!user || !user.password) {
-                        throw new Error("Invalid credentials");
+                        console.log("[Auth] User not found or no password");
+                        return null;
                     }
 
                     const isValid = await compare(credentials.password, user.password);
                     if (!isValid) {
-                        throw new Error("Invalid credentials");
+                        console.log("[Auth] Invalid password for:", credentials.email);
+                        return null;
                     }
 
+                    console.log("[Auth] Login successful for:", credentials.email);
                     return {
                         id: user.id,
                         email: user.email,
@@ -67,7 +71,7 @@ export const authOptions: NextAuthOptions = {
                         role: user.role as UserRole
                     };
                 } catch (error) {
-                    console.error("Authentication error:", error);
+                    console.error("[Auth] Authentication error:", error);
                     return null;
                 }
             }
@@ -76,27 +80,37 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                // Add type assertion for user
-                token.role = (user as User).role;
-                token.id = (user as User).id;
+                token.id = user.id;
+                token.role = user.role;
             }
             return token;
         },
         async session({ session, token }) {
             if (session.user) {
-                session.user.role = token.role as UserRole;
                 session.user.id = token.id as string;
+                session.user.role = token.role as UserRole;
             }
             return session;
         }
     },
     pages: {
         signIn: "/login",
-        error: "/login",
+        error: "/login?error=true",
     },
     session: {
         strategy: "jwt",
         maxAge: 30 * 24 * 60 * 60, // 30 days
     },
-    debug: process.env.NODE_ENV === "development"
+    debug: process.env.NODE_ENV === "development",
+    logger: {
+        error(code, metadata) {
+            console.error('[Auth] Error:', { code, metadata });
+        },
+        warn(code) {
+            console.warn('[Auth] Warning:', code);
+        },
+        debug(code, metadata) {
+            console.log('[Auth] Debug:', code, metadata);
+        }
+    }
 };

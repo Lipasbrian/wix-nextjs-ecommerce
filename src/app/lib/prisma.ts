@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 
 /**
  * Unified Prisma Client that supports:
@@ -17,8 +17,8 @@ declare global {
 // Configure client options based on environment
 const clientOptions = {
     log: process.env.NODE_ENV === 'development'
-        ? ['query', 'error', 'warn']
-        : ['error'],
+        ? ['query', 'error', 'warn'] as Prisma.LogLevel[]
+        : ['error'] as Prisma.LogLevel[],
 };
 
 // Determine if we should use mocks (development only)

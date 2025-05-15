@@ -27,6 +27,7 @@ model User {
   analytics       VendorAdAnalytics[] @relation("VendorAdAnalytics")
   vendorAnalytics VendorAnalytics?
   ads             Ad[]
+  products        Product[]           // Add this line to create the relation
 }
 
 model Ad {
@@ -38,7 +39,7 @@ model Ad {
   budget         Float
   status         AdStatus    @default(PENDING)
   createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  updatedAt      DateTime    @default(now())
   vendorId       String
   analytics      Analytics[]
   vendor         User        @relation(fields: [vendorId], references: [id])
@@ -85,6 +86,8 @@ model Product {
   analyticsEvents AnalyticsEvent[]
   CartItem        CartItem[]
   OrderItem       OrderItem[]
+  vendorId        String?
+  vendor          User?            @relation(fields: [vendorId], references: [id])
 
   @@index([name])
 }
@@ -101,7 +104,7 @@ model Cart {
   sessionId String?    @unique
   userId    String?
   createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  updatedAt DateTime   @default(now())
   user      User?      @relation(fields: [userId], references: [id])
   items     CartItem[]
 
@@ -124,12 +127,12 @@ model CartItem {
 }
 
 model Order {
-  id        String      @id @default(cuid())
+  id        String      @id @default(uuid())
   userId    String
   status    OrderStatus @default(PENDING)
   total     Float
   createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  updatedAt DateTime    @default(now())
   user      User        @relation(fields: [userId], references: [id])
   items     OrderItem[]
 
@@ -200,16 +203,16 @@ model VerificationToken {
 }
 
 model AnalyticsEvent {
-  id        String   @id @default(cuid())
-  eventType String
-  productId String
-  vendorId  String
-  userId    String?
-  timestamp DateTime @default(now())
-  metadata  Json?
-  product   Product  @relation(fields: [productId], references: [id])
-  user      User?    @relation("UserEvents", fields: [userId], references: [id])
-  vendor    User     @relation("VendorEvents", fields: [vendorId], references: [id])
+  id         String    @id @default(cuid())
+  eventType  String
+  productId  String?   // Optional now
+  vendorId   String
+  adId       String?   // New field for ad tracking
+  userId     String?   // Add this field
+  timestamp  DateTime  @default(now()) // Add this field
+  product    Product?  @relation(fields: [productId], references: [id])
+  user       User?     @relation("UserEvents", fields: [userId], references: [id])
+  vendor     User      @relation("VendorEvents", fields: [vendorId], references: [id])
 
   @@index([eventType])
   @@index([productId])
@@ -221,12 +224,17 @@ model AnalyticsEvent {
 model VendorAnalytics {
   id                 String   @id @default(cuid())
   vendorId           String   @unique
-  addToCartEvents    Json
+  impressions        Int      @default(0)
+  clicks             Int      @default(0)
+  ctr                Float    @default(0)
+  revenue            Float    @default(0)
+  date               DateTime @default(now())
+  addToCartEvents    Json?
   averageOrderValue  Float    @default(0)
   createdAt          DateTime @default(now())
-  mostViewedProducts Json
-  salesByMonth       Json
-  topSellingProducts Json
+  mostViewedProducts Json?
+  salesByMonth       Json?
+  topSellingProducts Json?
   totalOrders        Int      @default(0)
   totalRevenue       Float    @default(0)
   updatedAt          DateTime @updatedAt

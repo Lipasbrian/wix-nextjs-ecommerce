@@ -9,7 +9,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         console.log("[Analytics] Received tracking request:", body);
 
-        const { eventType, productId, vendorId, metadata } = body;
+        const { eventType, productId, vendorId, adId, _position, _adTitle, _metadata } = body;
 
         // Add detailed validation messages
         if (!eventType) {
@@ -20,6 +20,65 @@ export async function POST(request: Request) {
             );
         }
 
+        // Special handling for ad-related events
+        if (eventType === 'adImpression' || eventType === 'adClick') {
+            if (!adId) {
+                console.log("[Analytics] Missing adId");
+                return NextResponse.json(
+                    { error: 'Ad ID is required for ad events' },
+                    { status: 400 }
+                );
+            }
+
+            if (!vendorId) {
+                console.log("[Analytics] Missing vendorId");
+                return NextResponse.json(
+                    { error: 'Vendor ID is required' },
+                    { status: 400 }
+                );
+            }
+
+            // Get the current user from session (optional)
+            const session = await getServerSession(authOptions);
+            const _userId = session?.user?.id;
+
+            // For ad events, update the Analytics table
+            try {
+                const updateType = eventType === 'adImpression' ? 'impressions' : 'clicks';
+
+                // Generate a unique ID using adId
+                const analyticsId = `analytics-${adId}`;
+
+                // Find the ad analytics record or create if it doesn't exist
+                const _adAnalytics = await prisma.analytics.upsert({
+                    where: {
+                        id: analyticsId
+                    },
+                    update: {
+                        [updateType]: { increment: 1 }
+                    },
+                    create: {
+                        id: analyticsId,
+                        userId: session?.user?.id || 'anonymous', // Provide the required userId field
+                        adId: adId,
+                        impressions: eventType === 'adImpression' ? 1 : 0,
+                        clicks: eventType === 'adClick' ? 1 : 0
+                    }
+                });
+
+                console.log(`[Analytics] Ad ${updateType} recorded successfully for ad: ${adId}`);
+                return NextResponse.json({ success: true });
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                console.error(`[Analytics] Error tracking ad ${eventType}:`, error);
+                return NextResponse.json(
+                    { error: `Failed to track ad ${eventType}`, details: errorMessage },
+                    { status: 500 }
+                );
+            }
+        }
+
+        // Standard product-related event handling (your existing code)
         if (!productId) {
             console.log("[Analytics] Missing productId");
             return NextResponse.json(
@@ -42,6 +101,7 @@ export async function POST(request: Request) {
         });
 
         if (!product) {
+            console.log("[Analytics] Product not found:", productId);
             return NextResponse.json(
                 { error: 'Product not found' },
                 { status: 404 }
@@ -49,11 +109,15 @@ export async function POST(request: Request) {
         }
 
         // Verify the vendor exists
-        const vendor = await prisma.user.findUnique({
-            where: { id: vendorId, role: 'VENDOR' }
+        const vendor = await prisma.user.findFirst({
+            where: {
+                id: vendorId,
+                role: 'VENDOR'
+            }
         });
 
         if (!vendor) {
+            console.log("[Analytics] Vendor not found:", vendorId);
             return NextResponse.json(
                 { error: 'Vendor not found' },
                 { status: 404 }
@@ -64,10 +128,18 @@ export async function POST(request: Request) {
         const session = await getServerSession(authOptions);
         const userId = session?.user?.id;
 
-        // Record the event
-        await prisma.analyticsEvent.create({
+        console.log("[Analytics] Creating event:", {
+            eventType,
+            productId,
+            vendorId,
+            userId: userId || "anonymous"
+        });
+
+        // Record the event using connect syntax for relations
+        const event = await prisma.analyticsEvent.create({
             data: {
                 eventType,
+                timestamp: new Date(), // Add server-side timestamp
                 product: {
                     connect: { id: productId }
                 },
@@ -77,15 +149,19 @@ export async function POST(request: Request) {
                 user: userId ? {
                     connect: { id: userId }
                 } : undefined,
-                metadata: metadata || {}
+                // If metadata isn't part of the Prisma schema, remove it or add it to the schema
+                // metadata: metadata || {}
+                // Additional data can be added here if needed
             }
         });
 
-        return NextResponse.json({ success: true });
+        console.log("[Analytics] Event recorded successfully:", event.id);
+        return NextResponse.json({ success: true, eventId: event.id });
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error("[Analytics] Error tracking event:", error);
         return NextResponse.json(
-            { error: 'Failed to track event' },
+            { error: 'Failed to track event', details: errorMessage },
             { status: 500 }
         );
     }

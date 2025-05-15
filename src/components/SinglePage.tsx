@@ -91,7 +91,7 @@ const SinglePage = ({ product, relatedProducts = [] }: Props) => {
   useEffect(() => {
     if (product?.id) {
       // For vendorId, either update your Product type or use a default
-      const vendorId = 'default-vendor-id'; // Use an actual ID in production
+      const vendorId = product.vendorId || 'default-vendor-id';
       trackEvent(EventTypes.VIEW_PRODUCT, product.id, vendorId);
     }
   }, [product]);
@@ -101,7 +101,7 @@ const SinglePage = ({ product, relatedProducts = [] }: Props) => {
     addToCart(product, quantity);
 
     // Track the event
-    const vendorId = 'default-vendor-id'; // Use an actual ID in production
+    const vendorId = product.vendorId || 'default-vendor-id';
     trackEvent(EventTypes.ADD_TO_CART, product.id, vendorId, {
       quantity,
       price: product.price,

@@ -1,24 +1,28 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { debounce } from "lodash";
+import { useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { debounce } from 'lodash';
 
 export default function ProductSearch() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const { replace } = useRouter();
 
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("q") || "");
+  // Add null check with optional chaining
+  const [searchTerm, setSearchTerm] = useState(searchParams?.get('q') || '');
 
   // Create a debounced function to avoid too many URL updates
   const debouncedSearch = debounce((term: string) => {
-    const params = new URLSearchParams(searchParams);
+    // Convert ReadonlyURLSearchParams to a regular object first
+    const params = new URLSearchParams(
+      searchParams ? Object.fromEntries(searchParams.entries()) : {}
+    );
 
     if (term) {
-      params.set("q", term);
+      params.set('q', term);
     } else {
-      params.delete("q");
+      params.delete('q');
     }
 
     replace(`${pathname}?${params.toString()}`);
